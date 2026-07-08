@@ -1,0 +1,13 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #111;
+}
+
+h2, h3, h4 {
+  margin: 0 0 8px 0;
+}

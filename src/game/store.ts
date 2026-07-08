@@ -8,8 +8,8 @@ import { generateProceduralMap } from './mapGenerator'
 // в мучение на таком масштабе. Камера + отсечение невидимых тайлов в
 // MapCanvas.tsx уже поддерживают рост до 400x400+, если решишь увеличить —
 // проверяй производительность на своей машине при увеличении.
-export const MAP_WIDTH = 220
-export const MAP_HEIGHT = 160
+export const MAP_WIDTH = 250
+export const MAP_HEIGHT = 135
 
 function createInitialTiles(): Record<string, Tile> {
   return generateProceduralMap({ width: MAP_WIDTH, height: MAP_HEIGHT })
@@ -18,7 +18,7 @@ function createInitialTiles(): Record<string, Tile> {
 interface BuilderState {
   selectedTerrain: TerrainType
   selectedResource: ResourceType
-  mode: 'terrain' | 'resource' | 'city'
+  mode: 'terrain' | 'resource' | 'city' | 'hills'
   brushRadius: number // 0 = один гекс, 1 = гекс + соседи, и т.д.
 }
 
@@ -31,6 +31,8 @@ interface Store {
   setSelectedResource: (r: ResourceType) => void
   setMode: (m: BuilderState['mode']) => void
   setBrushRadius: (r: number) => void
+  exportMap: () => string
+  importMap: (json: string) => { success: boolean; error?: string }
 }
 
 export const useGameStore = create<Store>((set, get) => ({
@@ -63,6 +65,17 @@ export const useGameStore = create<Store>((set, get) => ({
           )
 
     const updatedTiles = { ...game.tiles }
+
+    if (builder.mode === 'hills') {
+      const newValue = !centerTile.hasHills
+      for (const tile of affected) {
+        const key = tileKey(tile.coord)
+        updatedTiles[key] = { ...tile, hasHills: newValue }
+      }
+      set({ game: { ...game, tiles: updatedTiles } })
+      return
+    }
+
     for (const tile of affected) {
       const key = tileKey(tile.coord)
       const updated: Tile = { ...tile }
@@ -95,4 +108,35 @@ export const useGameStore = create<Store>((set, get) => ({
     set((s) => ({ builder: { ...s.builder, selectedResource: r, mode: 'resource' } })),
   setMode: (m) => set((s) => ({ builder: { ...s.builder, mode: m } })),
   setBrushRadius: (r) => set((s) => ({ builder: { ...s.builder, brushRadius: r } })),
+  exportMap: () => {
+    const { game } = get()
+    const payload = {
+      version: 1,
+      mapWidth: MAP_WIDTH,
+      mapHeight: MAP_HEIGHT,
+      savedAt: new Date().toISOString(),
+      tiles: game.tiles,
+      civilizations: game.civilizations,
+    }
+    return JSON.stringify(payload, null, 2)
+  },
+  importMap: (json) => {
+    try {
+      const parsed = JSON.parse(json)
+      if (!parsed || typeof parsed !== 'object' || !parsed.tiles) {
+        return { success: false, error: 'Файл не похож на сохранённую карту (нет поля tiles).' }
+      }
+      const { game } = get()
+      set({
+        game: {
+          ...game,
+          tiles: parsed.tiles,
+          civilizations: parsed.civilizations ?? game.civilizations,
+        },
+      })
+      return { success: true }
+    } catch (e) {
+      return { success: false, error: 'Не удалось разобрать JSON: файл повреждён или неверного формата.' }
+    }
+  },
 }))

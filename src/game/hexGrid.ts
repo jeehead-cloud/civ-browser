@@ -88,11 +88,27 @@ export function hexCorners(center: { x: number; y: number }): { x: number; y: nu
 // Генерирует прямоугольную область карты в axial-координатах
 export function generateMapCoords(width: number, height: number): AxialCoord[] {
   const coords: AxialCoord[] = []
-  for (let r = 0; r < height; r++) {
-    const rOffset = Math.floor(r / 2)
-    for (let q = -rOffset; q < width - rOffset; q++) {
+  for (let q = 0; q < width; q++) {
+    const qOffset = Math.floor(q / 2)
+    for (let r = -qOffset; r < height - qOffset; r++) {
       coords.push({ q, r })
     }
   }
   return coords
+}
+
+export function getMapPixelBounds(width: number, height: number): { minX: number; maxX: number; minY: number; maxY: number } {
+  const coords = generateMapCoords(width, height)
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const c of coords) {
+    const { x, y } = axialToPixel(c)
+    if (x < minX) minX = x
+    if (x > maxX) maxX = x
+    if (y < minY) minY = y
+    if (y > maxY) maxY = y
+  }
+  return { minX, maxX, minY, maxY }
 }

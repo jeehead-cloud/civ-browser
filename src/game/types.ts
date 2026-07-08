@@ -3,27 +3,57 @@
 export type TerrainType =
   | 'ocean'
   | 'coast'
+  | 'lake'
   | 'plains'
   | 'grassland'
-  | 'hills'
   | 'mountains'
   | 'desert'
   | 'tundra'
   | 'snow'
 
-export type VegetationType = 'none' | 'forest' | 'jungle'
+export type VegetationType = 'none' | 'forest' | 'jungle' | 'swamp'
 
 export type ResourceType =
   | 'none'
-  // стратегические
-  | 'iron'
-  | 'horses'
-  // роскошь
-  | 'gold'
-  | 'gems'
-  // бонусные
+  // bonus
   | 'wheat'
+  | 'deer'
   | 'fish'
+  | 'bananas'
+  | 'stone'
+  // luxury
+  | 'gold'
+  | 'silver'
+  | 'gems'
+  | 'marble'
+  | 'ivory'
+  | 'furs'
+  | 'cotton'
+  | 'dyes'
+  | 'incense'
+  | 'wine'
+  | 'sugar'
+  | 'spices'
+  | 'citrus'
+  | 'silk'
+  | 'truffles'
+  | 'whales'
+  | 'pearls'
+  | 'coral'
+  | 'salt'
+  | 'amber'
+  // strategic
+  | 'horses'
+  | 'iron'
+  | 'niter'
+  | 'coal'
+  | 'oil'
+  | 'aluminum'
+  | 'uranium'
+  | 'rareEarths'
+  | 'lithium'
+  | 'naturalGas'
+  | 'titanium'
 
 export interface AxialCoord {
   q: number
@@ -37,6 +67,8 @@ export interface Tile {
   resource: ResourceType
   ownerCivId: string | null
   cityId: string | null
+  hasHills: boolean
+  riverDirections: number[]
 }
 
 export type PlayerType = 'human' | 'ai'

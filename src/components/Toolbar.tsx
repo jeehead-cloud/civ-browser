@@ -1,12 +1,13 @@
+import { useRef } from 'react'
 import { useGameStore } from '../game/store'
 import { TerrainType, ResourceType } from '../game/types'
 
 const TERRAINS: TerrainType[] = [
   'ocean',
   'coast',
+  'lake',
   'plains',
   'grassland',
-  'hills',
   'mountains',
   'desert',
   'tundra',
@@ -24,6 +25,41 @@ export function Toolbar() {
   const setMode = useGameStore((s) => s.setMode)
   const setBrushRadius = useGameStore((s) => s.setBrushRadius)
   const regenerateMap = useGameStore((s) => s.regenerateMap)
+  const exportMap = useGameStore((s) => s.exportMap)
+  const importMap = useGameStore((s) => s.importMap)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleDownload() {
+    const json = exportMap()
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    a.href = url
+    a.download = `civ-map-${timestamp}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function handleUploadClick() {
+    fileInputRef.current?.click()
+  }
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = importMap(reader.result as string)
+      if (!result.success) {
+        alert('Ошибка загрузки карты: ' + result.error)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = '' // reset so selecting the same file again still triggers onChange
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, width: 240 }}>
@@ -46,6 +82,12 @@ export function Toolbar() {
           onClick={() => setMode('city')}
         >
           Город
+        </button>{' '}
+        <button
+          style={{ fontWeight: builder.mode === 'hills' ? 'bold' : 'normal' }}
+          onClick={() => setMode('hills')}
+        >
+          Холмы
         </button>
       </div>
 
@@ -110,12 +152,34 @@ export function Toolbar() {
         </p>
       )}
 
+      {builder.mode === 'hills' && (
+        <p style={{ fontSize: 13, color: '#555' }}>
+          Кликни или потяни кистью, чтобы включить/выключить холмы на выбранной области. Холмы — это свойство поверх ландшафта, а не отдельный тип.
+        </p>
+      )}
+
       <div>
         <h4>Процедурная база</h4>
         <button onClick={() => regenerateMap()}>Сгенерировать заново</button>
         <p style={{ fontSize: 12, color: '#666' }}>
           Перегенерирует всю карту случайным континентом — используй как
           отправную точку, дальше правь кистью вручную.
+        </p>
+      </div>
+
+      <div>
+        <h4>Сохранение</h4>
+        <button onClick={handleDownload}>Скачать карту</button>{' '}
+        <button onClick={handleUploadClick}>Загрузить карту</button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          style={{ display: 'none' }}
+          onChange={handleFileSelected}
+        />
+        <p style={{ fontSize: 12, color: '#666' }}>
+          Скачивает текущую карту в JSON-файл на диск. Загрузка полностью заменяет текущую карту содержимым файла.
         </p>
       </div>
     </div>

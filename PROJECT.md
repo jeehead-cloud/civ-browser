@@ -31,7 +31,7 @@ The owner is both the sole developer and the sole player. There is no multiplaye
 
 - Not multiplayer, not networked, not server-authoritative.
 - Not a pixel-perfect Civ5 clone — mechanics are intentionally simplified and will grow in complexity over time (eras, tech gating, and diplomacy are explicitly deferred).
-- Not aiming for photorealistic geography — the "Earth" map mode is a stylized, hand-tuned approximation, not a scientifically accurate projection.
+- Not aiming for photorealistic geography — the "Earth-like" map mode is a stylized, regenerable approximation (fraction boxes + landmark overrides), not a scientifically accurate projection.
 
 ---
 
@@ -53,7 +53,7 @@ The owner is both the sole developer and the sole player. There is no multiplaye
 - Manual painting tools: terrain, resources, hills (property, not a terrain type), rivers (edge-based, not tile-based), vegetation (forest/jungle/swamp).
 - Two ways to get a base map:
   - **Procedural generation**: organic coastlines, mountain ranges, deserts, rivers, lakes, latitude-based biomes, clustered resource placement. Known to have accepted rough edges (see `CURRENT_STATUS.md` and `ARCHITECTURE.md` for the specific lessons learned).
-  - **Hand-authored "Earth" map**: a stylized, deliberately non-realistic world map (oversized Europe, compact Americas, recognizable Sahara/Himalayas/Mediterranean/etc.), built by direct polygon authoring rather than procedural growth, because procedural generation could not reliably guarantee landmass connectivity or recognizable real-world shapes.
+  - **Earth-like generation** («Создать Землю»): fraction-box continents with oversized Europe, forced bridges/straits, landmark mountains/rivers/lakes/deserts, and regional resource bias — regenerable in-app, stylized rather than geographically accurate.
 - Save/load a map as a JSON file.
 
 ### 5.2. Civilizations & Global Settings (Milestone M3)

@@ -179,9 +179,11 @@ Multi-stage pipeline: continent shape (organic coastline via noise-modulated blo
 
 This mode is accepted as **imperfect** — see `CURRENT_STATUS.md` for the specific known rough edges. It's good enough for "give me a random world," not for a recognizable Earth.
 
-### 5.2. Hand-authored "Earth" map (`earthTemplate.ts` + the Earth-map path in `mapGenerator.ts`, plus a separate one-off authoring pipeline used to build the actual shipped Earth map)
+### 5.2. Earth-like generation (`earthTemplate.ts` + `generateEarthLikeMap` in `mapGenerator.ts`)
 
-After procedural generation repeatedly failed to reliably produce a connected, recognizable Eurasia+Africa landmass (see lessons below), the Earth map was built by **directly hand-drawing continent polygons** (in 0..1 fraction space, oversized Europe, compact Americas, a real carved Mediterranean/Black Sea/Baltic Sea, etc.), rasterizing them, and verifying connectivity **programmatically** (flood-fill / connected-components check) before ever loading the result into the game — rather than trusting a visual read. Mountains, deserts (Sahara/Gobi/Arabian), famous rivers (Nile, Danube, Amazon, Mississippi, Yangtze, Ganges), and named lakes (Baikal, Victoria, Great Lakes) were then layered on top by hand-picked waypoints, reusing the same primitives as the procedural generator (`hexLine`, `growBlob`, `generateSmoothField`).
+In-app mode triggered by **«Создать Землю»**. Continents grow as organic blobs inside fixed fraction-space boxes (`EARTH_CONTINENTS` — oversized Europe, separate Britain/Japan islands), then forced land bridges (Anatolia, Sinai), carved straits (Gibraltar, Bosphorus, Gulf of Aden/Red Sea), landmark mountain polylines (Himalayas/Andes/Alps/Rockies), soft-edged Sahara desert override, named rivers (Nile/Amazon/Mississippi), named lakes (Baikal/Victoria), and regional resource bias (Middle East oil, Siberia gas/coal, Andes silver/gold, Australia aluminum/iron, Congo gems). Reuses the same terrain/vegetation/hills/resource helpers as the procedural path. Mountains are only painted onto existing land (no ocean mountain slivers).
+
+This is a **stylized, regenerable approximation**, not a scientifically accurate Earth and not a one-off JSON artifact. Connectivity of Eurasia–Africa depends on the bridge/strait specs and organic growth; results vary by seed.
 
 ---
 
@@ -237,11 +239,13 @@ These are real bugs found during development. They're recorded here so they aren
   "mapHeight": 135,
   "savedAt": "ISO timestamp",
   "tiles": { "q,r": { /* Tile */ }, ... },
-  "civilizations": [ { /* Civilization */ }, ... ]
+  "cities": [ { /* City */ }, ... ],
+  "civilizations": [ { /* Civilization */ }, ... ],
+  "settings": { /* GameSettings */ }
 }
 ```
 
-Loading a file **fully replaces** the current map's tiles (and civilizations, if present in the file) — there is no merge behavior.
+Loading a file **fully replaces** the current map's tiles (and cities/civilizations/settings when present in the file) — there is no merge behavior. Older saves without `cities`/`settings` load with an empty city list and keep current settings defaults.
 
 ---
 

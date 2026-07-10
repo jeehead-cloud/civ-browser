@@ -249,6 +249,11 @@ Behavior
 Validation
 - npm run build: PASS / FAIL / NOT RUN
 
+Documentation
+- CURRENT_STATUS.md updated: yes / no
+- Classification: Significant / Routine
+- History entry added: <title or "none">
+
 Commit
 - hash and message, or "Not committed"
 ```
@@ -268,7 +273,62 @@ Do not let an important rule exist only in chat history — if it matters going 
 
 ---
 
-## 14. Final Safety Rule
+## 14. End-of-Iteration Documentation Procedure (Mandatory)
+
+**Documentation maintenance is part of the definition of done.** An implementation or meaningful analysis that leaves `CURRENT_STATUS.md` outdated is incomplete. Include documentation updates in the same logical change set — do not defer them to a later prompt.
+
+After every completed implementation prompt or meaningful analysis prompt that changes repository files (or changes how the project should be understood going forward), the agent must:
+
+1. **Inspect the actual final state** — review the real diff and resulting repository state; do not write status from memory or from the prompt alone.
+2. **Reconcile the main snapshot in `CURRENT_STATUS.md`** — update milestone status, known limitations, next steps, architecture-relevant state, or other current-state sections whenever they changed. Remove or rewrite statements that became obsolete. Do not blindly append entries on top of stale claims.
+3. **Add a concise entry to the Recent Change Log** (rolling 3 months) for every completed iteration that changed repository files. Newest entries first.
+4. **Classify the iteration independently** as Routine or Significant (see criteria below). Do not wait for the owner to label it.
+5. **If Significant, also add an entry to Significant Change History** (permanent; never delete for age).
+6. **Update the `Last updated` date** on `CURRENT_STATUS.md` whenever that file changes.
+7. **Report explicitly in the final response:**
+   - whether `CURRENT_STATUS.md` was updated;
+   - whether the change was classified as Significant or Routine;
+   - which history entry was added (title).
+
+### Significant vs Routine — Classification Guidance
+
+Treat a change as **Significant** when it affects one or more of:
+
+- a user-visible feature or major behavior;
+- a milestone’s scope, status, or completion;
+- architecture, data model, persistence format, or important file structure;
+- product/gameplay rules or invariants;
+- deployment or operational workflow;
+- a major bug or root-cause lesson that future agents must not reintroduce;
+- a durable development-process decision;
+- a dependency or stack decision with lasting consequences;
+- removal, replacement, or substantial redesign of an existing capability.
+
+Normally **not** Significant:
+
+- typo fixes;
+- wording polish;
+- formatting-only changes;
+- small CSS adjustments with no durable UX rule;
+- narrowly scoped cleanup that does not change behavior;
+- minor bug fixes with no reusable lesson or architectural consequence.
+
+Use judgment. Prefer Significant when a future agent would be misled without a permanent record.
+
+### Retention Rules
+
+- **Recent Change Log** — retain only entries whose dates fall within the most recent **3 calendar months**. Older routine entries may be removed during later updates. Significant items may appear here while recent; their permanent source of truth is Significant Change History.
+- **Significant Change History** — permanent. Never remove an entry merely because it is old. Clarify or correct an entry if later evidence shows it was inaccurate.
+
+### What stays where
+
+- Detailed operating instructions for this procedure live in **this file** (`AI_AGENTS.md`).
+- `CURRENT_STATUS.md` holds the current-state snapshot, the two history sections, and the maintenance policy — not a duplicate of every rule above.
+- The main body of `CURRENT_STATUS.md` remains a **current-state snapshot**, not a chronological changelog. Routine iteration history belongs only in the Recent Change Log.
+
+---
+
+## 15. Final Safety Rule
 
 **If repository context, task scope, or working tree state is ambiguous, stop before editing.**
 

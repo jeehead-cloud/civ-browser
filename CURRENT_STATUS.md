@@ -7,7 +7,7 @@
 
 > This is the frequently updated implementation snapshot for Civ Browser.
 > It records what's actually implemented (per milestone), what's known-broken or deliberately deferred, and the nearest next steps.
-> Update this after every meaningful feature block — see the maintenance rule at the end.
+> After every repository-changing agent iteration, reconcile this snapshot and update the change logs (§§5–7). Full procedure: `AI_AGENTS.md` §14.
 
 ---
 
@@ -35,20 +35,19 @@ Not yet done / open questions:
 
 ### M2 — Генерация и редактор карт, городов (Active)
 
-Scope: hex grid, World Builder tools, procedural generation, hand-authored Earth map, save/load. **Only the map itself** — civilizations/settings are M3.
+Scope: hex grid, World Builder tools, procedural generation, Earth-like map mode, save/load. **Only the map itself** — civilizations/settings are M3.
 
 Implemented:
 - Flat-top hex grid, axial coordinates, camera pan/zoom, viewport culling (handles the full 250×135 / ~33,750-tile map).
-- World Builder tools: terrain brush (with adjustable radius), resource brush, hills toggle, vegetation brush (forest/jungle/swamp/none), river tool (click near a hex edge to add/remove a river edge), city placement/removal.
+- World Builder tools: terrain brush (with adjustable radius), resource brush, hills toggle, vegetation brush (forest/jungle/swamp/none), river tool (click near a hex edge to add/remove a river edge), city placement/removal via modal (name + starting population).
 - Procedural random map generator: organic coastlines + extra islands, mountain ranges (with occasional width, and a connectivity-repair pass so ranges can't fully wall off part of a continent), "great desert" blobs capped per-landmass, rivers (major + minor, via 0-1 BFS from elevation down to the sea), lakes, latitude-based biome/vegetation, clustered single-roll resource placement.
-  - **Known accepted limitation**: procedural generation is good for "give me a random world" but was never made reliable enough for a recognizable, fully-connected "Earth" — see the hand-authored map below for how that requirement was actually met.
-- Hand-authored "Earth" map: continents drawn as polygons in fraction space (oversized Europe per the owner's request, compact Americas pushed to the left edge, Antarctica hugging the bottom edge, Madagascar, enlarged Arabia/India, Indonesia/Philippines archipelago, Britain/Japan/Kuril islands as separate landmasses), with a real carved Mediterranean/Black Sea/Baltic Sea/Red Sea/Persian Gulf, verified programmatically for landmass connectivity (Eurasia+Africa is one connected component; Americas/Australia/Britain/Japan/Madagascar/Antarctica/the archipelago islands are each separate). Mountains (Rockies/Andes/Atlas/Alps/Caucasus/Urals/Himalayas), 3 deserts (Sahara/Arabian/Gobi), 6 named rivers (Nile/Danube/Amazon/Mississippi/Yangtze/Ganges) plus a few procedural minor rivers, and 3 named lakes (Baikal/Victoria/Great Lakes) were layered on top by hand-picked waypoints.
-  - This map was produced once as a specific JSON file and handed to the owner to load via "Загрузить карту" — it is **not** currently regenerable from a single button in the running app the way the random generator is; the authoring pipeline exists as standalone scripts outside the React app.
-- Save current map to a `.json` file; load a `.json` file to fully replace the current map.
+  - **Known accepted limitation**: procedural generation is good for "give me a random world" but is not a recognizable Earth.
+- Earth-like map mode (`generateEarthLikeMap` + `earthTemplate.ts`, toolbar **«Создать Землю»**): fraction-box continents (oversized Europe; Britain and Japan as separate island boxes), forced land bridges (Anatolia, Sinai), carved straits (Gibraltar, Bosphorus, Gulf of Aden/Red Sea), landmark mountains (Himalayas/Andes/Alps/Rockies — land-only), soft-edged Sahara override, named rivers (Nile/Amazon/Mississippi), named lakes (Baikal/Victoria), regional resource bias. Regenerable in-app; results vary by seed.
+- Save/load JSON includes tiles, cities, civilizations, and settings (older saves without cities still load; cities default to `[]`).
 
 Not yet done:
 - No script to auto-place cities on a generated/loaded map (mentioned as a "later" idea by the owner, not started).
-- No UI button inside the app to regenerate the specific hand-authored Earth map — it's a one-off artifact right now, not a repeatable in-app generator mode.
+- Earth-like mode is stylized and seed-dependent — not a fixed hand-authored polygon Earth with Antarctica/Madagascar/full Mediterranean carving as previously explored in offline authoring experiments.
 
 ### M3 — Глобальные настройки и цивилизации (Active)
 
@@ -98,7 +97,8 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 ## 3. Known Bugs / Limitations Worth Remembering
 
-- Procedural map generation is accepted as imperfect (see M2 above) — don't assume it will produce a recognizable or even always-connected world; that's what the hand-authored Earth map path exists for.
+- Procedural map generation is accepted as imperfect (see M2 above) — don't assume it will produce a recognizable or always-connected world.
+- Earth-like generation is regenerable but stylized and seed-dependent; forced bridges/straits improve Eurasia–Africa connectivity but do not guarantee Civ5-level geography.
 - No automated test suite exists. Verification has so far relied on manual browser checks plus, for generation/algorithm work, throwaway Node scripts that check connectivity or other numeric invariants (see `ARCHITECTURE.md` §7 for the specific historical bugs this caught).
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
 
@@ -107,7 +107,7 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 ## 4. Nearest Next Steps
 
 1. Design and implement the M5 event log (data shape, where it's stored in `GameState`, how it's surfaced in the UI).
-2. Decide whether/how to make the hand-authored Earth map regenerable from within the app, or keep it as a one-off loadable file.
+2. Optionally enrich Earth-like templates (more landmarks / seas) if the stylized regenerable mode is not enough.
 3. Start M6 (units) once M5 feels "done enough" — likely the next big scope decision point.
 
 ---
@@ -119,6 +119,64 @@ Update this document when:
 - a milestone's status changes (Active ↔ Queued ↔ effectively done);
 - a major feature ships within an active milestone;
 - a known bug is found or fixed;
-- a "not yet done" item in this file gets implemented.
+- a "not yet done" item in this file gets implemented;
+- any repository-changing agent iteration completes (see below).
 
-Don't turn this file into a commit-by-commit changelog — keep it at the level of "what can this app actually do right now," matching the milestone table in `PROJECT.md`.
+**The main body of this file is a current-state snapshot**, aligned with the milestone table in `PROJECT.md`. It is not a commit-by-commit changelog.
+
+Routine iteration history belongs only in **§6 Recent Change Log**. Durable decisions and major shifts belong in **§7 Significant Change History**. Do not dump chronological noise into §§1–4.
+
+After every repository-changing agent iteration (mandatory; full procedure in `AI_AGENTS.md` §14):
+
+1. Reconcile §§1–4 with the actual repository state — rewrite or remove obsolete claims.
+2. Add a Recent Change Log entry (newest first).
+3. Classify the iteration as Routine or Significant; if Significant, also add a §7 entry.
+4. Update the `Last updated` date at the top of this file.
+5. Drop Recent Change Log entries older than **3 calendar months**. Never delete Significant Change History entries for age.
+
+---
+
+## 6. Recent Change Log — Rolling 3 Months
+
+Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §7.
+
+### 2026-07-10 — World builder, Earth-like maps, civilizations, turn simulation
+
+- Classification: Significant
+- Summary: Shipped the coherent MVP loop already present in the working tree: vegetation/river editor tools, city modal, Edit/View + tile info, Earth-like map generation (`earthTemplate` + `generateEarthLikeMap`), civilizations/capitals/settings panels, turn engine (growth/culture/annexation), players panel; save/load now persists cities and settings; removed temp diagnostics; reconciled docs to match the in-app Earth-like path (not a one-off JSON Earth).
+- Files: `src/App.tsx`, `src/components/*` (Toolbar, MapCanvas, CityModal, TileInfoPanel, CivilizationsPanel, SettingsPanel, PlayControlPanel, PlayersPanel), `src/game/{types,store,mapGenerator,earthTemplate}.ts`, `CURRENT_STATUS.md`, `ARCHITECTURE.md`, `PROJECT.md`
+- Validation: `npm run build` PASS; Earth-like numeric smoke via tsx NOT RUN (no local tsx; build covers typecheck)
+
+### 2026-07-10 — Mandatory end-of-iteration documentation process
+
+- Classification: Significant
+- Summary: Introduced required `CURRENT_STATUS.md` reconciliation after every repository-changing agent iteration; rolling 3-month recent log; permanent significant-change history; agent-owned Significant/Routine classification. Operating details in `AI_AGENTS.md` §14.
+- Files: `AI_AGENTS.md`, `CURRENT_STATUS.md`
+- Validation: NOT RUN (documentation-only)
+
+### 2026-07-10 — Repository hygiene for generated/temp artifacts
+
+- Classification: Routine
+- Summary: Fixed corrupted UTF-16 `.gitignore` line; ignore `tsconfig.tsbuildinfo` and `*.zip`; stop tracking `tsconfig.tsbuildinfo`; removed local `src.zip` backup (no unique source vs working tree).
+- Files: `.gitignore`, `tsconfig.tsbuildinfo` (removed from index)
+- Validation: NOT RUN (hygiene-only)
+
+---
+
+## 7. Significant Change History — Permanent
+
+Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-10 — MVP world builder + turn simulation loop
+
+- Area: Product / Architecture / Gameplay
+- Change: Civ Browser now has an end-to-end setup→play loop: map editor tools (including vegetation and rivers), regenerable Earth-like map mode, civilization/capital management, global growth/culture settings, and `endTurn` growth/culture/annexation. JSON save/load includes cities and settings. Persistence format and UI panel set documented in `ARCHITECTURE.md`.
+- Reason: This is the first playable MVP core; future milestones (event log, units, combat, AI) build on this data model and UI shell.
+- Source of truth: `ARCHITECTURE.md`, `PRODUCT_RULES.md`, `CURRENT_STATUS.md` §§1–4, `PROJECT.md`
+
+### 2026-07-10 — Mandatory documentation lifecycle for AI agents
+
+- Area: Process
+- Change: Civ Browser now requires (1) reconciling `CURRENT_STATUS.md` after every repository-changing agent iteration, (2) a rolling 3-calendar-month Recent Change Log, (3) a permanent Significant Change History, and (4) agent-owned classification of Significant vs Routine changes. Documentation maintenance is part of the definition of done.
+- Reason: Keeps the status snapshot trustworthy across parallel projects and multi-agent sessions; prevents important decisions from living only in chat history; separates ephemeral iteration noise from durable project memory.
+- Source of truth: `AI_AGENTS.md` §14, this file §§5–7

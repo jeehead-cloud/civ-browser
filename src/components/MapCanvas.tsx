@@ -33,7 +33,17 @@ export function MapCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const game = useGameStore((s) => s.game)
+  const builder = useGameStore((s) => s.builder)
+  const cities = useGameStore((s) => s.game.cities)
+  const civilizations = useGameStore((s) => s.game.civilizations)
   const paintAt = useGameStore((s) => s.paintAt)
+  const viewMode = useGameStore((s) => s.viewMode)
+  const setViewingTile = useGameStore((s) => s.setViewingTile)
+  const setAddingCityAt = useGameStore((s) => s.setAddingCityAt)
+  const removeCity = useGameStore((s) => s.removeCity)
+  const toggleRiverEdge = useGameStore((s) => s.toggleRiverEdge)
+  const assigningCapitalForCivId = useGameStore((s) => s.assigningCapitalForCivId)
+  const assignCapital = useGameStore((s) => s.assignCapital)
 
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 0.5 })
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({
@@ -43,7 +53,6 @@ export function MapCanvas() {
   const draggingRef = useRef<{ startX: number; startY: number; camX: number; camY: number; moved: boolean } | null>(
     null,
   )
-  const loggedSizeRef = useRef(false)
 
   function worldToScreen(wx: number, wy: number) {
     return {
@@ -80,11 +89,6 @@ export function MapCanvas() {
       height = Math.max(MIN_CANVAS_SIZE, height)
 
       setCanvasSize((prev) => (prev.width === width && prev.height === height ? prev : { width, height }))
-
-      if (!loggedSizeRef.current) {
-        loggedSizeRef.current = true
-        console.log('canvasSize:', { width, height })
-      }
     }
 
     computeSize()
@@ -202,7 +206,7 @@ export function MapCanvas() {
         }
       }
 
-      if (tile.resource !== 'none' && camera.zoom > 0.08) {
+      if (tile.resource !== 'none' && !tile.cityId && camera.zoom > 0.08) {
         ctx.fillStyle = '#000'
         ctx.font = `${10 * camera.zoom}px sans-serif`
         ctx.textAlign = 'center'
@@ -210,15 +214,35 @@ export function MapCanvas() {
       }
 
       if (tile.cityId) {
+        const city = cities.find((c) => c.id === tile.cityId)
+        const radius = Math.max(4, 9 * camera.zoom)
         ctx.beginPath()
-        ctx.arc(screen.x, screen.y, Math.max(3, 8 * camera.zoom), 0, Math.PI * 2)
+        ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2)
         ctx.fillStyle = '#fff'
         ctx.fill()
         ctx.strokeStyle = '#000'
         ctx.stroke()
+        if (city && camera.zoom > 0.08) {
+          ctx.fillStyle = '#000'
+          ctx.font = `bold ${Math.max(8, 9 * camera.zoom)}px sans-serif`
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText(String(city.population), screen.x, screen.y)
+          ctx.textBaseline = 'alphabetic'
+          ctx.font = `bold ${10 * camera.zoom}px sans-serif`
+          ctx.fillText(city.name, screen.x, screen.y - radius - 4 * camera.zoom)
+        }
+        if (city && city.civId) {
+          const civ = civilizations.find((c) => c.id === city.civId)
+          if (civ && camera.zoom > 0.08) {
+            ctx.font = `${12 * camera.zoom}px sans-serif`
+            ctx.textAlign = 'center'
+            ctx.fillText(civ.flagEmoji, screen.x + radius + 6 * camera.zoom, screen.y)
+          }
+        }
       }
     }
-  }, [game.tiles, camera, canvasSize])
+  }, [game.tiles, game.cities, game.civilizations, camera, canvasSize])
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     draggingRef.current = {
@@ -252,9 +276,41 @@ export function MapCanvas() {
     const world = screenToWorld(sx, sy)
     const coord = pixelToAxial(world.x, world.y)
     const key = tileKey(coord)
-    if (game.tiles[key]) {
-      paintAt(key)
+    const tile = game.tiles[key]
+    if (!tile) return
+
+    if (viewMode === 'view') {
+      setViewingTile(key)
+      return
     }
+
+    if (assigningCapitalForCivId) {
+      if (tile.cityId) {
+        assignCapital(assigningCapitalForCivId, tile.cityId)
+      }
+      return
+    }
+
+    if (builder.mode === 'city') {
+      if (tile.cityId) {
+        removeCity(key)
+      } else {
+        setAddingCityAt(key)
+      }
+      return
+    }
+
+    if (builder.mode === 'river') {
+      const tileCenter = axialToPixel(tile.coord)
+      const dx = world.x - tileCenter.x
+      const dy = world.y - tileCenter.y
+      const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI
+      const edgeIndex = (((Math.round((angleDeg - 30) / 60) % 6) + 6) % 6)
+      toggleRiverEdge(key, edgeIndex)
+      return
+    }
+
+    paintAt(key)
   }
 
   function handleWheel(e: React.WheelEvent<HTMLCanvasElement>) {

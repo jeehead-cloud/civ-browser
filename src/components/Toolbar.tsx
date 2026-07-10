@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useGameStore } from '../game/store'
-import { TerrainType, ResourceType } from '../game/types'
+import { TerrainType, ResourceType, VegetationType } from '../game/types'
 
 const TERRAINS: TerrainType[] = [
   'ocean',
@@ -16,6 +16,8 @@ const TERRAINS: TerrainType[] = [
 
 const RESOURCES: ResourceType[] = ['none', 'iron', 'horses', 'gold', 'gems', 'wheat', 'fish']
 
+const VEGETATION_OPTIONS: VegetationType[] = ['none', 'forest', 'jungle', 'swamp']
+
 const BRUSH_SIZES = [0, 1, 2, 3, 5, 8]
 
 export function Toolbar() {
@@ -25,6 +27,11 @@ export function Toolbar() {
   const setMode = useGameStore((s) => s.setMode)
   const setBrushRadius = useGameStore((s) => s.setBrushRadius)
   const regenerateMap = useGameStore((s) => s.regenerateMap)
+  const generateEarthMap = useGameStore((s) => s.generateEarthMap)
+  const viewMode = useGameStore((s) => s.viewMode)
+  const setViewMode = useGameStore((s) => s.setViewMode)
+  const selectedVegetation = useGameStore((s) => s.builder.selectedVegetation)
+  const setSelectedVegetation = useGameStore((s) => s.setSelectedVegetation)
   const exportMap = useGameStore((s) => s.exportMap)
   const importMap = useGameStore((s) => s.importMap)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -64,6 +71,27 @@ export function Toolbar() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16, width: 240 }}>
       <div>
+        <h3>Режим приложения</h3>
+        <button
+          style={{ fontWeight: viewMode === 'edit' ? 'bold' : 'normal' }}
+          onClick={() => setViewMode('edit')}
+        >
+          Редактирование
+        </button>{' '}
+        <button
+          style={{ fontWeight: viewMode === 'view' ? 'bold' : 'normal' }}
+          onClick={() => setViewMode('view')}
+        >
+          Просмотр
+        </button>
+        <p style={{ fontSize: 12, color: '#666' }}>
+          В режиме "Просмотр" клик по гексу показывает информацию о нём вместо рисования.
+        </p>
+      </div>
+
+      {viewMode === 'edit' && (
+        <>
+      <div>
         <h3>Режим</h3>
         <button
           style={{ fontWeight: builder.mode === 'terrain' ? 'bold' : 'normal' }}
@@ -88,6 +116,18 @@ export function Toolbar() {
           onClick={() => setMode('hills')}
         >
           Холмы
+        </button>{' '}
+        <button
+          style={{ fontWeight: builder.mode === 'vegetation' ? 'bold' : 'normal' }}
+          onClick={() => setMode('vegetation')}
+        >
+          Растительность
+        </button>{' '}
+        <button
+          style={{ fontWeight: builder.mode === 'river' ? 'bold' : 'normal' }}
+          onClick={() => setMode('river')}
+        >
+          Реки
         </button>
       </div>
 
@@ -158,9 +198,37 @@ export function Toolbar() {
         </p>
       )}
 
+      {builder.mode === 'vegetation' && (
+        <div>
+          <h4>Растительность</h4>
+          {VEGETATION_OPTIONS.map((v) => (
+            <div key={v}>
+              <label>
+                <input
+                  type="radio"
+                  name="vegetation"
+                  checked={selectedVegetation === v}
+                  onChange={() => setSelectedVegetation(v)}
+                />
+                {v}
+              </label>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {builder.mode === 'river' && (
+        <p style={{ fontSize: 13, color: '#555' }}>
+          Кликни ближе к краю гекса, а не по центру — добавит или уберёт реку именно на этом ребре.
+        </p>
+      )}
+        </>
+      )}
+
       <div>
         <h4>Процедурная база</h4>
-        <button onClick={() => regenerateMap()}>Сгенерировать заново</button>
+        <button onClick={() => regenerateMap()}>Сгенерировать заново</button>{' '}
+        <button onClick={() => generateEarthMap()}>Создать Землю</button>
         <p style={{ fontSize: 12, color: '#666' }}>
           Перегенерирует всю карту случайным континентом — используй как
           отправную точку, дальше правь кистью вручную.

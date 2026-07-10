@@ -1,6 +1,16 @@
-import { AxialCoord, Tile, TerrainType } from './types'
-import { axialToPixel, generateMapCoords, getMapPixelBounds, hexDistance, neighbors, tileKey } from './hexGrid'
+import { AxialCoord, ResourceType, Tile, TerrainType } from './types'
+import { axialToPixel, generateMapCoords, getMapPixelBounds, hexDistance, neighbors, pixelToAxial, tileKey } from './hexGrid'
 import { RESOURCE_RULES, tileMatchesRule } from './resourceData'
+import {
+  EARTH_CONTINENTS,
+  EARTH_STRAITS,
+  EARTH_BRIDGES,
+  EARTH_DESERTS,
+  EARTH_MOUNTAINS,
+  EARTH_LAKES,
+  EARTH_RIVERS,
+  EARTH_RESOURCE_BIAS,
+} from './earthTemplate'
 
 interface GenOptions {
   width: number
@@ -142,6 +152,57 @@ function directionIndex(from: AxialCoord, to: AxialCoord): number {
     if (from.q + DIRS[i].q === to.q && from.r + DIRS[i].r === to.r) return i
   }
   return -1
+}
+
+function cubeRound(qf: number, rf: number): AxialCoord {
+  let x = qf
+  let z = rf
+  let y = -x - z
+  let rx = Math.round(x)
+  let ry = Math.round(y)
+  let rz = Math.round(z)
+  const xDiff = Math.abs(rx - x)
+  const yDiff = Math.abs(ry - y)
+  const zDiff = Math.abs(rz - z)
+  if (xDiff > yDiff && xDiff > zDiff) rx = -ry - rz
+  else if (yDiff > zDiff) ry = -rx - rz
+  else rz = -rx - ry
+  return { q: rx, r: rz }
+}
+
+function hexLine(a: AxialCoord, b: AxialCoord): AxialCoord[] {
+  const n = hexDistance(a, b)
+  const results: AxialCoord[] = []
+  for (let i = 0; i <= n; i++) {
+    const t = n === 0 ? 0 : i / n
+    const q = a.q + (b.q - a.q) * t
+    const r = a.r + (b.r - a.r) * t
+    results.push(cubeRound(q, r))
+  }
+  return results
+}
+
+function fracToPixel(xFrac: number, yFrac: number, bounds: { minX: number; maxX: number; minY: number; maxY: number }) {
+  return {
+    x: bounds.minX + xFrac * (bounds.maxX - bounds.minX),
+    y: bounds.minY + yFrac * (bounds.maxY - bounds.minY),
+  }
+}
+
+function fracToAxial(xFrac: number, yFrac: number, bounds: { minX: number; maxX: number; minY: number; maxY: number }): AxialCoord {
+  const { x, y } = fracToPixel(xFrac, yFrac, bounds)
+  return pixelToAxial(x, y)
+}
+
+function pixelInFracBox(
+  coord: AxialCoord,
+  box: { xMin: number; xMax: number; yMin: number; yMax: number },
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+): boolean {
+  const { x, y } = axialToPixel(coord)
+  const xFrac = (x - bounds.minX) / (bounds.maxX - bounds.minX)
+  const yFrac = (y - bounds.minY) / (bounds.maxY - bounds.minY)
+  return xFrac >= box.xMin && xFrac <= box.xMax && yFrac >= box.yMin && yFrac <= box.yMax
 }
 
 export function generateProceduralMap(options: GenOptions, seed = Date.now()): Record<string, Tile> {
@@ -661,7 +722,6 @@ export function generateProceduralMap(options: GenOptions, seed = Date.now()): R
       growRiver(source, minorMaxLength)
     }
   }
-  console.log('river tiles:', Object.values(tiles).filter((t) => t.riverDirections.length > 0).length)
 
   // ============================================================
   // STAGE 4: Biome & vegetation (latitude bands, great deserts,
@@ -930,6 +990,457 @@ export function generateProceduralMap(options: GenOptions, seed = Date.now()): R
       }
     }
 
+    tile.resource = chosen.id
+  }
+
+  return tiles
+}
+
+export function generateEarthLikeMap(options: { width: number; height: number }, seed = Date.now()): Record<string, Tile> {
+  const { width, height } = options
+  const rand = mulberry32(seed)
+  const coords = generateMapCoords(width, height)
+  const coordsByKey = new Map<string, AxialCoord>()
+  for (const c of coords) coordsByKey.set(tileKey(c), c)
+
+  const tiles: Record<string, Tile> = {}
+  for (const coord of coords) {
+    tiles[tileKey(coord)] = {
+      coord,
+      terrain: 'ocean',
+      vegetation: 'none',
+      resource: 'none',
+      ownerCivId: null,
+      cityId: null,
+      hasHills: false,
+      riverDirections: [],
+    }
+  }
+
+  const bounds = getMapPixelBounds(width, height)
+  const centerY = (bounds.minY + bounds.maxY) / 2
+  const halfHeight = (bounds.maxY - bounds.minY) / 2
+  function latitudeFactor(coord: AxialCoord): number {
+    const { y } = axialToPixel(coord)
+    return Math.min(1, Math.abs(y - centerY) / halfHeight)
+  }
+
+  // ---- Stage 1: continents grown within fixed fraction-space boxes ----
+  const isLand = new Set<string>()
+  for (const continent of EARTH_CONTINENTS) {
+    const candidates = coords.filter((c) => pixelInFracBox(c, continent.box, bounds))
+    if (candidates.length === 0) continue
+    const targetSize = Math.round(candidates.length * continent.landRatio)
+    let placed = 0
+    for (let i = 0; i < continent.seedCount && placed < targetSize; i++) {
+      const seedCoord = candidates[Math.floor(rand() * candidates.length)]
+      const remaining = targetSize - placed
+      const blob = growBlob(
+        seedCoord,
+        Math.max(5, Math.round(remaining / (continent.seedCount - i))),
+        (k) => {
+          const c = coordsByKey.get(k)
+          return !!c && pixelInFracBox(c, continent.box, bounds)
+        },
+        rand,
+        0.72,
+      )
+      for (const key of blob) {
+        if (!isLand.has(key)) {
+          isLand.add(key)
+          placed++
+        }
+      }
+    }
+  }
+
+  // Force small land bridges so continents that should be physically
+  // connected (Europe-Asia at Anatolia, Africa-Asia at Sinai) always are,
+  // regardless of how the independent organic growth turned out.
+  for (const bridge of EARTH_BRIDGES) {
+    const seedCoord = fracToAxial(bridge.x, bridge.y, bounds)
+    if (!tiles[tileKey(seedCoord)]) continue
+    const blob = growBlob(seedCoord, bridge.radius * bridge.radius, () => true, rand, 0.7)
+    for (const key of blob) {
+      isLand.add(key)
+    }
+  }
+
+  // Carve forced straits (Gibraltar, Bosphorus/Dardanelles) even if land grew across them
+  for (const strait of EARTH_STRAITS) {
+    for (const coord of coords) {
+      const key = tileKey(coord)
+      if (isLand.has(key) && pixelInFracBox(coord, strait.box, bounds)) {
+        isLand.delete(key)
+      }
+    }
+  }
+
+  const COAST_RADIUS = 2
+  const coastDistance = new Map<string, number>()
+  const openOceanVisited = new Set<string>()
+  const openOceanFrontier: AxialCoord[] = []
+  for (const coord of coords) {
+    const key = tileKey(coord)
+    if (!isLand.has(key) && !openOceanVisited.has(key)) {
+      const isBorder = coord.q === 0 || neighbors(coord).some((n) => !coordsByKey.has(tileKey(n)))
+      if (isBorder) {
+        openOceanVisited.add(key)
+        openOceanFrontier.push(coord)
+      }
+    }
+  }
+  while (openOceanFrontier.length > 0) {
+    const current = openOceanFrontier.pop()!
+    for (const n of neighbors(current)) {
+      const nKey = tileKey(n)
+      if (coordsByKey.has(nKey) && !isLand.has(nKey) && !openOceanVisited.has(nKey)) {
+        openOceanVisited.add(nKey)
+        openOceanFrontier.push(n)
+      }
+    }
+  }
+  const enclosedPocketKeys: string[] = []
+  for (const coord of coords) {
+    const key = tileKey(coord)
+    if (!isLand.has(key) && !openOceanVisited.has(key)) {
+      enclosedPocketKeys.push(key)
+      tiles[key].terrain = 'lake'
+    }
+  }
+
+  const coastVisited = new Set<string>([...isLand, ...enclosedPocketKeys])
+  let coastFrontier: { coord: AxialCoord; dist: number }[] = []
+  for (const key of isLand) coastFrontier.push({ coord: coordsByKey.get(key)!, dist: 0 })
+  while (coastFrontier.length > 0) {
+    const { coord, dist } = coastFrontier.shift()!
+    if (dist >= COAST_RADIUS) continue
+    for (const n of neighbors(coord)) {
+      const nKey = tileKey(n)
+      if (coordsByKey.has(nKey) && !coastVisited.has(nKey)) {
+        coastVisited.add(nKey)
+        coastDistance.set(nKey, dist + 1)
+        coastFrontier.push({ coord: n, dist: dist + 1 })
+      }
+    }
+  }
+  for (const key of coastDistance.keys()) tiles[key].terrain = 'coast'
+  for (const key of isLand) tiles[key].terrain = 'grassland' // placeholder until Stage 4
+
+  // ---- Stage 2: mountains — a couple of random ranges for flavor, plus forced landmark ranges ----
+  const { componentOf, sizes: componentSizes } = computeComponents(isLand, coordsByKey)
+  const landArray = Array.from(isLand)
+
+  for (const mountainSpec of EARTH_MOUNTAINS) {
+    const waypoints = mountainSpec.points.map((p) => fracToAxial(p.x, p.y, bounds))
+    for (let i = 0; i < waypoints.length - 1; i++) {
+      const line = hexLine(waypoints[i], waypoints[i + 1])
+      for (const coord of line) {
+        const key = tileKey(coord)
+        if (!tiles[key] || !isLand.has(key)) continue
+        tiles[key].terrain = 'mountains'
+        if (mountainSpec.width > 1) {
+          for (const n of neighbors(coord)) {
+            const nKey = tileKey(n)
+            if (tiles[nKey] && isLand.has(nKey) && rand() < 0.5) tiles[nKey].terrain = 'mountains'
+          }
+        }
+      }
+    }
+  }
+
+  const extraRangeCount = 2 + Math.floor(rand() * 2)
+  const rangeLength = Math.max(6, Math.round(width / 12))
+  for (let i = 0; i < extraRangeCount && landArray.length > 0; i++) {
+    let current = coordsByKey.get(landArray[Math.floor(rand() * landArray.length)])!
+    let dir = Math.floor(rand() * 6)
+    for (let step = 0; step < rangeLength; step++) {
+      const key = tileKey(current)
+      const tile = tiles[key]
+      if (!tile || tile.terrain === 'ocean' || tile.terrain === 'coast') break
+      tile.terrain = 'mountains'
+      if (rand() < 0.25) dir = (dir + (rand() < 0.5 ? 1 : 5)) % 6
+      const next = { q: current.q + DIRS[dir].q, r: current.r + DIRS[dir].r }
+      if (!tiles[tileKey(next)]) break
+      current = next
+    }
+  }
+
+  for (const key of isLand) {
+    const tile = tiles[key]
+    if (tile.terrain !== 'mountains') continue
+    for (const n of neighbors(tile.coord)) {
+      const nKey = tileKey(n)
+      const nTile = tiles[nKey]
+      if (nTile && nTile.terrain !== 'ocean' && nTile.terrain !== 'coast' && nTile.terrain !== 'mountains') {
+        if (rand() < 0.45) nTile.hasHills = true
+      }
+    }
+  }
+  const hillinessField = generateSmoothField(coordsByKey, mulberry32(seed + 424242), 3)
+  for (const key of isLand) {
+    const tile = tiles[key]
+    if (tile.terrain === 'ocean' || tile.terrain === 'coast' || tile.terrain === 'mountains') continue
+    if (tile.hasHills) continue
+    if (hillinessField.get(key)! > 0.63) tile.hasHills = true
+  }
+
+  // ---- Stage 3: rivers — a few procedural ones plus forced famous rivers ----
+  const distanceToWater = new Map<string, number>()
+  const waterVisited = new Set<string>()
+  let waterFrontier: { coord: AxialCoord; dist: number }[] = []
+  for (const coord of coords) {
+    const key = tileKey(coord)
+    const t = tiles[key].terrain
+    if (t === 'ocean' || t === 'coast' || t === 'lake') {
+      distanceToWater.set(key, 0)
+      waterVisited.add(key)
+      waterFrontier.push({ coord, dist: 0 })
+    }
+  }
+  while (waterFrontier.length > 0) {
+    const { coord, dist } = waterFrontier.shift()!
+    for (const n of neighbors(coord)) {
+      const nKey = tileKey(n)
+      if (coordsByKey.has(nKey) && !waterVisited.has(nKey)) {
+        waterVisited.add(nKey)
+        distanceToWater.set(nKey, dist + 1)
+        waterFrontier.push({ coord: n, dist: dist + 1 })
+      }
+    }
+  }
+
+  function commitRiverPath(path: AxialCoord[]) {
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = path[i]
+      const b = path[i + 1]
+      const dirA = directionIndex(a, b)
+      const dirB = directionIndex(b, a)
+      const tileA = tiles[tileKey(a)]
+      const tileB = tiles[tileKey(b)]
+      if (!tileA || !tileB) continue
+      if (dirA >= 0 && !tileA.riverDirections.includes(dirA)) tileA.riverDirections.push(dirA)
+      if (dirB >= 0 && !tileB.riverDirections.includes(dirB)) tileB.riverDirections.push(dirB)
+    }
+  }
+
+  for (const riverSpec of EARTH_RIVERS) {
+    const waypoints = riverSpec.points.map((p) => fracToAxial(p.x, p.y, bounds))
+    const fullPath: AxialCoord[] = []
+    for (let i = 0; i < waypoints.length - 1; i++) {
+      const line = hexLine(waypoints[i], waypoints[i + 1])
+      if (fullPath.length > 0) line.shift()
+      fullPath.push(...line)
+    }
+    commitRiverPath(fullPath)
+  }
+
+  function growRiver(startKey: string, maxLength: number, minLength = 3): number {
+    let current = coordsByKey.get(startKey)!
+    const visitedInRiver = new Set<string>([startKey])
+    const path: AxialCoord[] = [current]
+    for (let step = 0; step < maxLength; step++) {
+      const curKey = tileKey(current)
+      const curDist = distanceToWater.get(curKey) ?? 0
+      if (curDist === 0) break
+      let best: AxialCoord | null = null
+      let bestDist = curDist
+      const candidates = neighbors(current).filter((n) => coordsByKey.has(tileKey(n)))
+      const order = candidates.map((_, i) => i).sort(() => rand() - 0.5)
+      for (const idx of order) {
+        const n = candidates[idx]
+        const nKey = tileKey(n)
+        if (visitedInRiver.has(nKey)) continue
+        const nDist = distanceToWater.get(nKey) ?? 0
+        if (nDist < bestDist) {
+          bestDist = nDist
+          best = n
+        }
+      }
+      if (!best) break
+      visitedInRiver.add(tileKey(best))
+      path.push(best)
+      current = best
+    }
+    if (path.length - 1 < minLength) return 0
+    commitRiverPath(path)
+    return path.length - 1
+  }
+
+  const { componentOf: riverComponentOf } = computeComponents(isLand, coordsByKey)
+  const extraRiverComponents = new Set(riverComponentOf.values())
+  for (const compId of extraRiverComponents) {
+    const memberKeys = landArray.filter((k) => riverComponentOf.get(k) === compId)
+    if (memberKeys.length < 60) continue
+    const pool = memberKeys.filter((k) => tiles[k].riverDirections.length === 0)
+    const count = 1 + Math.floor(rand() * 2)
+    for (let i = 0; i < count && pool.length > 0; i++) {
+      const idx = Math.floor(rand() * pool.length)
+      const source = pool.splice(idx, 1)[0]
+      growRiver(source, Math.max(8, Math.round((width + height) / 10)), 3)
+    }
+  }
+
+  // ---- Stage 4: biome, with a forced Sahara override ----
+  const noiseField = generateSmoothField(coordsByKey, mulberry32(seed + 55), 4)
+  const BANDS: { max: number; terrains: TerrainType[] }[] = [
+    { max: 0.12, terrains: ['grassland', 'plains'] },
+    { max: 0.35, terrains: ['plains', 'grassland'] },
+    { max: 0.72, terrains: ['plains', 'grassland'] },
+    { max: 0.88, terrains: ['tundra', 'plains'] },
+    { max: 1.01, terrains: ['snow', 'tundra'] },
+  ]
+  for (const key of isLand) {
+    const tile = tiles[key]
+    if (tile.terrain === 'mountains') continue
+    const lat = latitudeFactor(tile.coord)
+    const noise = noiseField.get(key)!
+    let bandIndex = BANDS.findIndex((b) => lat <= b.max)
+    if (bandIndex === -1) bandIndex = BANDS.length - 1
+    const band = BANDS[bandIndex]
+    tile.terrain = band.terrains[noise < 0.5 ? 0 : 1]
+  }
+
+  for (const desertSpec of EARTH_DESERTS) {
+    const { xMin, xMax, yMin, yMax } = desertSpec.box
+    for (const coord of coords) {
+      const key = tileKey(coord)
+      const tile = tiles[key]
+      if (!isLand.has(key) || tile.terrain === 'mountains') continue
+      const { x, y } = axialToPixel(coord)
+      const xFrac = (x - bounds.minX) / (bounds.maxX - bounds.minX)
+      const yFrac = (y - bounds.minY) / (bounds.maxY - bounds.minY)
+      if (xFrac < xMin || xFrac > xMax || yFrac < yMin || yFrac > yMax) continue
+      const distToEdge = Math.min(xFrac - xMin, xMax - xFrac, yFrac - yMin, yMax - yFrac)
+      const boxSize = Math.min(xMax - xMin, yMax - yMin)
+      const normalizedDist = Math.min(1, distToEdge / (boxSize * 0.3))
+      if (rand() < normalizedDist) {
+        tile.terrain = 'desert'
+      }
+    }
+  }
+
+  for (let pass = 0; pass < 2; pass++) {
+    const pending: string[] = []
+    for (const key of isLand) {
+      const tile = tiles[key]
+      if (tile.terrain !== 'grassland') continue
+      const touchesHarsh = neighbors(tile.coord).some((n) => {
+        const nTile = tiles[tileKey(n)]
+        return nTile && (nTile.terrain === 'desert' || nTile.terrain === 'tundra' || nTile.terrain === 'snow')
+      })
+      if (touchesHarsh) pending.push(key)
+    }
+    for (const key of pending) tiles[key].terrain = 'plains'
+  }
+
+  for (const key of isLand) {
+    const tile = tiles[key]
+    const lat = latitudeFactor(tile.coord)
+    if (tile.terrain === 'tundra') {
+      if (rand() < 0.35) tile.vegetation = 'forest'
+      continue
+    }
+    if (tile.terrain !== 'plains' && tile.terrain !== 'grassland') continue
+    if (lat <= 0.18) {
+      if (tile.terrain === 'grassland' && rand() < 0.45) tile.vegetation = 'jungle'
+      else if (tile.terrain === 'plains' && rand() < 0.22) tile.vegetation = 'jungle'
+    } else if (lat > 0.15 && lat <= 0.42) {
+      if (rand() < 0.05) tile.vegetation = 'forest'
+    } else {
+      if (rand() < 0.22) tile.vegetation = 'forest'
+    }
+  }
+
+  // Forced lakes (Baikal, Victoria)
+  for (const lakeSpec of EARTH_LAKES) {
+    const seedCoord = fracToAxial(lakeSpec.x, lakeSpec.y, bounds)
+    const seedKey = tileKey(seedCoord)
+    if (!tiles[seedKey]) continue
+    const blob = growBlob(
+      seedCoord,
+      lakeSpec.size,
+      (k) => {
+        const t = tiles[k]
+        return !!t && t.terrain !== 'mountains' && t.terrain !== 'ocean' && t.terrain !== 'coast'
+      },
+      rand,
+      0.65,
+    )
+    for (const key of blob) {
+      const tile = tiles[key]
+      tile.terrain = 'lake'
+      tile.vegetation = 'none'
+      tile.hasHills = false
+      tile.resource = 'none'
+      isLand.delete(key)
+    }
+  }
+
+  // ---- Stage 5: resources, with regional bias ----
+  function regionalBias(coord: AxialCoord, resource: ResourceType): number {
+    let mult = 1
+    for (const bias of EARTH_RESOURCE_BIAS) {
+      if (bias.resource === resource && pixelInFracBox(coord, bias.box, bounds)) {
+        mult *= bias.multiplier
+      }
+    }
+    return mult
+  }
+
+  const landByComponent = new Map<number, string[]>()
+  for (const key of isLand) {
+    const compId = componentOf.get(key)
+    if (compId === undefined) continue
+    if (!landByComponent.has(compId)) landByComponent.set(compId, [])
+    landByComponent.get(compId)!.push(key)
+  }
+  const richnessZones = new Map<string, number>()
+  for (const [, memberKeys] of landByComponent) {
+    if (memberKeys.length < 60) continue
+    if (rand() > 0.4) continue
+    const center = coordsByKey.get(memberKeys[Math.floor(rand() * memberKeys.length)])!
+    const memberSet = new Set(memberKeys)
+    const zoneTiles = growBlob(center, 6 + Math.floor(rand() * 4), (k) => memberSet.has(k), rand, 0.6)
+    for (const zk of zoneTiles) richnessZones.set(zk, 2.0)
+  }
+
+  const LAND_TILE_RESOURCE_CHANCE = 0.05
+  const WATER_TILE_RESOURCE_CHANCE = 0.012
+
+  for (const coord of coords) {
+    const key = tileKey(coord)
+    const tile = tiles[key]
+    if (tile.resource !== 'none') continue
+    const isWater = tile.terrain === 'ocean' || tile.terrain === 'coast' || tile.terrain === 'lake'
+    const baseChance = isWater ? WATER_TILE_RESOURCE_CHANCE : LAND_TILE_RESOURCE_CHANCE
+    const richness = richnessZones.get(key) ?? 1
+    if (rand() > baseChance * richness) continue
+
+    const hasRiver = tile.riverDirections.length > 0
+    const matching = RESOURCE_RULES.filter((rule) =>
+      tileMatchesRule(tile.terrain, tile.vegetation, tile.hasHills, hasRiver, rule),
+    )
+    if (matching.length === 0) continue
+
+    const weights = matching.map((r) => {
+      let w = r.chance
+      if (r.boostTerrains && r.boostTerrains.includes(tile.terrain) && r.boostMultiplier) w *= r.boostMultiplier
+      w *= regionalBias(coord, r.id)
+      return w
+    })
+    const totalWeight = weights.reduce((a, b) => a + b, 0)
+    if (totalWeight <= 0) continue
+
+    let roll = rand() * totalWeight
+    let chosen = matching[matching.length - 1]
+    for (let i = 0; i < matching.length; i++) {
+      roll -= weights[i]
+      if (roll <= 0) {
+        chosen = matching[i]
+        break
+      }
+    }
     tile.resource = chosen.id
   }
 

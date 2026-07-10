@@ -1,1 +1,0 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/components/mapcanvas.tsx","./src/components/toolbar.tsx","./src/game/hexgrid.ts","./src/game/mapgenerator.ts","./src/game/resourcedata.ts","./src/game/store.ts","./src/game/types.ts"],"version":"5.9.3"}

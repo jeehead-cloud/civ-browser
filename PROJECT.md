@@ -1,7 +1,7 @@
 # Civ Browser — Project Overview
 
 **Status:** Active development (hobby project)
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-11
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
 **Main branch:** `main`
@@ -89,12 +89,25 @@ Algorithmic decision-making for AI-controlled civilizations; optional future LLM
 
 ---
 
-## 6. Roadmap (Milestones)
+## 6. Roadmap
+
+### 6.1. Foundation milestones (current priority)
+
+See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
+
+| ID | Milestone | Status |
+|---|---|---|
+| F1 | Application Shell and Routing | Done |
+| F2 | Domain Model Separation | Queued |
+| F3 | Persistence Abstraction | Queued |
+| F4–F12 | Library, editor migration, presets, new game, active game, … | Queued |
+
+### 6.2. Gameplay milestones (MVP / later)
 
 | # | Milestone | Scope | Status |
 |---|---|---|---|
 | M1 | Подготовка скелета UI игрового движка | Overall UI layout, panel arrangement, Edit/View mode toggle, the setup→playing phase transition | Active |
-| M2 | Генерация и редактор карт, городов | Hex grid, World Builder tools, procedural generation, hand-authored Earth map, save/load | Active |
+| M2 | Генерация и редактор карт, городов | Hex grid, World Builder tools, procedural generation, Earth-like map, save/load | Active |
 | M3 | Глобальные настройки и цивилизации | Civilizations panel (name/culture/flag), capital assignment, global settings panel | Active |
 | M4 | Механики роста и развития городов | Base growth rate + per-city growth bonus, culture accumulation config | Active |
 | M5 | Игровая механика и UI, журнал событий | Year/turn-step setup, Play button, turn simulation (growth/culture/annexation), players panel, event log | Active |
@@ -102,7 +115,7 @@ Algorithmic decision-making for AI-controlled civilizations; optional future LLM
 | M7 | Боевая система | Combat resolution | Queued |
 | M8 | AI и алгоритмы, дипломатия | AI decision-making, diplomacy | Queued |
 
-"Active" means the owner is actively working on it right now, not necessarily that it's finished — see `CURRENT_STATUS.md` for the granular done/not-done breakdown within each active milestone.
+"Active" means the owner is actively working on it right now, not necessarily that it's finished — see `CURRENT_STATUS.md` for the granular done/not-done breakdown. Foundation work (F*) is the near-term restructuring priority while preserving the MVP.
 
 ---
 
@@ -130,10 +143,11 @@ Era/tech gating, diplomacy, and multiplayer are deliberately deferred — they a
 
 - TypeScript
 - Vite
-- React (UI panels)
+- React (UI panels / pages)
+- React Router (application navigation)
 - HTML5 Canvas 2D (hex map rendering — chosen over PixiJS/Phaser for simplicity, since there's no physics or heavy sprite animation)
 - Zustand (state management)
-- No backend, no database — the entire game state lives in the browser; persistence is a manual JSON export/import
+- No backend, no database — the entire game state lives in the browser; persistence is a manual JSON export/import (IndexedDB planned in foundation F3)
 
 ### Hosting / Deployment
 

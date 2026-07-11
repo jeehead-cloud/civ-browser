@@ -1,28 +1,29 @@
-import { MapCanvas } from './components/MapCanvas'
-import { Toolbar } from './components/Toolbar'
-import { CityModal } from './components/CityModal'
-import { TileInfoPanel } from './components/TileInfoPanel'
-import { CivilizationsPanel } from './components/CivilizationsPanel'
-import { SettingsPanel } from './components/SettingsPanel'
-import { PlayControlPanel } from './components/PlayControlPanel'
-import { PlayersPanel } from './components/PlayersPanel'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { MainMenuPage } from './pages/MainMenuPage'
+import { LibraryHomePage } from './pages/LibraryHomePage'
+import { MapsCatalogPage } from './pages/MapsCatalogPage'
+import { CivilizationsCatalogPage } from './pages/CivilizationsCatalogPage'
+import { SettingsBalancePage } from './pages/SettingsBalancePage'
+import { NewGamePage } from './pages/NewGamePage'
+import { ActiveGamePage } from './pages/ActiveGamePage'
+import { WorldEditorPage } from './pages/WorldEditorPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 export default function App() {
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif' }}>
-      <Toolbar />
-      <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
-        <h2>Civ Browser — World Builder (MVP)</h2>
-        <MapCanvas />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <CivilizationsPanel />
-        <PlayControlPanel />
-        <PlayersPanel />
-        <SettingsPanel />
-      </div>
-      <CityModal />
-      <TileInfoPanel />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MainMenuPage />} />
+        <Route path="/library" element={<LibraryHomePage />} />
+        <Route path="/library/maps" element={<MapsCatalogPage />} />
+        <Route path="/library/maps/current/edit" element={<WorldEditorPage />} />
+        <Route path="/library/civilizations" element={<CivilizationsCatalogPage />} />
+        <Route path="/settings" element={<SettingsBalancePage />} />
+        <Route path="/games/new" element={<NewGamePage />} />
+        <Route path="/games/:gameId" element={<ActiveGamePage />} />
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }

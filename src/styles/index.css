@@ -8,6 +8,18 @@ body {
   color: #111;
 }
 
-h2, h3, h4 {
+h1, h2, h3, h4 {
   margin: 0 0 8px 0;
+}
+
+a {
+  color: #2563eb;
+}
+
+a:hover {
+  color: #1d4ed8;
+}
+
+button {
+  font-family: inherit;
 }

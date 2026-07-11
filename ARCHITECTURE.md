@@ -1,7 +1,7 @@
 # Civ Browser — Architecture
 
 **Status:** Active
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-11
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
 
@@ -16,18 +16,41 @@
 |---|---|---|
 | Language | TypeScript | |
 | Build tool | Vite | |
-| UI | React (function components + hooks) | Used for panels/toolbars, not for the map itself |
+| UI | React (function components + hooks) | Used for panels/toolbars/pages, not for the map itself |
+| Routing | React Router (`react-router-dom`) | Client-side routes; editor is a dedicated full-viewport route |
 | Map rendering | HTML5 Canvas 2D (raw `CanvasRenderingContext2D`) | Chosen over PixiJS/Phaser: no physics, no heavy sprite animation, and raw canvas keeps the rendering code simple and fully under the owner's control |
-| State management | Zustand | Single store in `src/game/store.ts` |
+| State management | Zustand | Single store in `src/game/store.ts` (not split in F1) |
 | Backend | **None** | Fully client-side; no server, no database, no accounts |
-| Persistence | Manual JSON export/import (download/upload a `.json` file) | See "Save/Load" below |
+| Persistence | Manual JSON export/import (download/upload a `.json` file) | IndexedDB planned in F3 — see `FOUNDATION_IMPLEMENTATION_PLAN.md` |
 | Package manager | npm | |
 
 There is intentionally no backend. Every piece of game state (map tiles, cities, civilizations, turn/year) lives in memory in the browser and is only persisted when the owner explicitly exports it to a JSON file.
 
 ---
 
-## 2. Repository Structure
+## 2. Routing
+
+`src/App.tsx` mounts `BrowserRouter` and declares:
+
+| Route | Screen | Status |
+|---|---|---|
+| `/` | Main Menu | Working |
+| `/library` | Game Content Library home | Placeholder (links only) |
+| `/library/maps` | Maps catalog | Placeholder |
+| `/library/maps/current/edit` | World Editor (existing MVP) | Working — temporary path until F4/F5 |
+| `/library/civilizations` | Civilizations catalog | Placeholder |
+| `/settings` | Settings & Balance | Placeholder |
+| `/games/new` | New Game | Placeholder |
+| `/games/:gameId` | Active Game | Placeholder (shows `gameId` as route context only) |
+| `*` | Not found | Working |
+
+Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it keeps the full viewport for the map and only adds a slim Main Menu link strip.
+
+Target later route for a selected map: `/library/maps/:mapId/edit` (F5). The `current` segment is an intentional F1 bridge so the MVP remains reachable before catalogs exist.
+
+---
+
+## 3. Repository Structure
 
 ```text
 civ-browser/
@@ -37,34 +60,47 @@ civ-browser/
 ├── vite.config.ts
 ├── README.md
 ├── .gitignore
+├── PRODUCT_STRUCTURE.md
+├── FOUNDATION_IMPLEMENTATION_PLAN.md
 └── src/
     ├── main.tsx
-    ├── App.tsx                    — top-level layout, renders Toolbar/MapCanvas/side panels/modals
+    ├── App.tsx                    — BrowserRouter + route table
     ├── styles/
     │   └── index.css
+    ├── pages/
+    │   ├── MainMenuPage.tsx
+    │   ├── LibraryHomePage.tsx
+    │   ├── MapsCatalogPage.tsx
+    │   ├── CivilizationsCatalogPage.tsx
+    │   ├── SettingsBalancePage.tsx
+    │   ├── NewGamePage.tsx
+    │   ├── ActiveGamePage.tsx
+    │   ├── NotFoundPage.tsx
+    │   └── WorldEditorPage.tsx    — existing MVP editor UI (unchanged tools/store)
     ├── game/
     │   ├── types.ts               — all core TypeScript types (Tile, City, Civilization, GameState, etc.)
     │   ├── hexGrid.ts              — hex-grid math (axial coords, pixel conversion, neighbors, hex line, map bounds)
     │   ├── store.ts                — Zustand store: game state + all actions (paint, save/load, turn engine, etc.)
-    │   ├── mapGenerator.ts         — procedural map generation + the hand-authored "Earth" map generator
-    │   ├── earthTemplate.ts        — fraction-space continent/strait/mountain/river/lake/resource-bias definitions for the "Earth" map mode
-    │   └── resourceData.ts        — declarative resource placement rules (terrain/vegetation/hills/river conditions, base chance, regional boost)
+    │   ├── mapGenerator.ts         — procedural map generation + Earth-like map generator
+    │   ├── earthTemplate.ts        — fraction-space continent/strait/mountain/river/lake/resource-bias definitions
+    │   └── resourceData.ts        — declarative resource placement rules
     └── components/
-        ├── MapCanvas.tsx           — canvas rendering (terrain, hills, vegetation, rivers, resources, cities, flags), pointer/click handling, camera pan/zoom
-        ├── Toolbar.tsx             — World Builder controls (mode buttons, brush size, terrain/resource/vegetation pickers, save/load buttons, Edit/View toggle)
-        ├── CityModal.tsx           — "found a city" dialog (name + starting population)
-        ├── TileInfoPanel.tsx       — View-mode popup showing tile + city + civilization + growth/culture info
+        ├── AppShell.tsx            — shared layout for non-editor screens
+        ├── MapCanvas.tsx           — canvas rendering, pointer/click handling, camera pan/zoom
+        ├── Toolbar.tsx             — World Builder controls
+        ├── CityModal.tsx           — "found a city" dialog
+        ├── TileInfoPanel.tsx       — View-mode popup
         ├── CivilizationsPanel.tsx  — create/list civilizations, assign capitals
-        ├── SettingsPanel.tsx       — global growth rate / capital culture / annex threshold settings
-        ├── PlayControlPanel.tsx    — start-game (year + years-per-turn) and End Turn button
-        └── PlayersPanel.tsx        — per-civilization city count and total population (visible during Play phase)
+        ├── SettingsPanel.tsx       — global growth/culture/annex settings
+        ├── PlayControlPanel.tsx    — start-game and End Turn
+        └── PlayersPanel.tsx        — per-civilization stats (Play phase)
 ```
 
 This map reflects the code as of the last update — always check the actual repository, since new files may have been added since.
 
 ---
 
-## 3. Data Model (`src/game/types.ts`)
+## 4. Data Model (`src/game/types.ts`)
 
 ### Tile
 
@@ -140,7 +176,7 @@ interface GameState {
 
 ---
 
-## 4. Hex Grid Math (`src/game/hexGrid.ts`)
+## 5. Hex Grid Math (`src/game/hexGrid.ts`)
 
 The map uses **flat-top** hexagons with **axial coordinates** (`q`, `r`).
 
@@ -169,7 +205,7 @@ A tile's `riverDirections` stores **neighbor direction indices** (matching `neig
 
 ---
 
-## 5. Map Generation
+## 6. Map Generation
 
 There are **two** independent map-building paths, both producing the same `Record<string, Tile>` shape:
 
@@ -187,7 +223,7 @@ This is a **stylized, regenerable approximation**, not a scientifically accurate
 
 ---
 
-## 6. Resource System (`resourceData.ts`)
+## 7. Resource System (`resourceData.ts`)
 
 Resources are defined as a flat list of declarative rules:
 
@@ -211,7 +247,7 @@ interface ResourceRule {
 
 ---
 
-## 7. Lessons Learned (Read Before Touching Generation/Hex Code)
+## 8. Lessons Learned (Read Before Touching Generation/Hex Code)
 
 These are real bugs found during development. They're recorded here so they aren't reintroduced.
 
@@ -228,7 +264,7 @@ These are real bugs found during development. They're recorded here so they aren
 
 ---
 
-## 8. Save/Load Format
+## 9. Save/Load Format
 
 `store.ts`'s `exportMap`/`importMap` produce/consume this JSON shape:
 
@@ -249,7 +285,7 @@ Loading a file **fully replaces** the current map's tiles (and cities/civilizati
 
 ---
 
-## 9. Documentation Boundaries
+## 10. Documentation Boundaries
 
 - Vision/roadmap → `PROJECT.md`
 - AI-agent workflow → `AI_AGENTS.md`

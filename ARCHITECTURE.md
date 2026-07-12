@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard. **F10** loads a session into a dedicated active-game runtime (`src/gameSession/`), runs the turn engine, autosaves, and renders the Active Game shell. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard. **F10** loads a session into a dedicated active-game runtime (`src/gameSession/`), runs the turn engine, autosaves, and renders the Active Game shell. **F11** adds contextual tile/city popups, fresh-water and informational yield selectors, and expanded Overview/Cities/World panels. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -47,7 +47,7 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | `/library/civilizations` | Civilizations catalog | Working (F4 repository-backed) |
 | `/settings` | Settings & Balance | Working (F8 rules presets) |
 | `/games/new` | New Game | Working four-step wizard (F9) |
-| `/games/:gameId` | Active Game | Working shell (F10); F11 expands popups |
+| `/games/:gameId` | Active Game | Working shell (F10) + context popups (F11) |
 | `*` | Not found | Working |
 
 Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it uses a full-viewport F6 shell: top command bar, dominant map, right editing panel.
@@ -126,7 +126,7 @@ civ-browser/
     ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
     ├── rules/                     — F8 parameter defs, preset service/hook, verify:rules-presets
     ├── newGame/                   — F9 setup validation, createGameSession, persistence service, wizard hook, verify:new-game
-    ├── gameSession/               — F10 active runtime store, turn engine, session load/save, selectors, verify:active-game
+    ├── gameSession/               — F10 runtime + F11 context selectors (fresh water, yields, events, world metrics), verify:active-game / verify:active-context
     ├── game/                      — legacy runtime types + Zustand store (World Editor / Sim)
     │   └── mapLayers/             — F7 independent layer operations + verify:map-layers
     └── components/
@@ -135,6 +135,7 @@ civ-browser/
         ├── editor/                — EditorCommandBar, EditorRightPanel, Tiles/Cities/Display sections
         ├── rules/                 — ParameterField
         ├── newGame/               — WizardSteps, SelectionCard, ValidationSummary
+        ├── activeGame/            — TilePopup, CityPopup, EventsPanel, CitiesPanel, WorldPanel, CivilizationsSummary
         ├── MapCanvas.tsx          — editor paint + optional active `view` prop (read-only)
         └── … (CityModal, TileInfoPanel, temporary Simulation panels)
 ```
@@ -301,6 +302,20 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Continue Game | Main Menu opens most recently updated `GameSession` |
 | Isolation | Source map templates and rules presets are never mutated by play |
 | Verification | `npm run verify:active-game` |
+
+## 3.10. Active Game context popups (F11)
+
+| Item | Behavior |
+|---|---|
+| Positioning | Map-edge overlay card (bottom-left of map column). Canvas camera anchor-follow deferred — documented choice for stability |
+| Tile popup | Landscape, water/fresh-water, informational yields, ownership; no actions |
+| City popup | Real fields only + planned Buildings/Characters/Build/Actions (disabled/dialog) |
+| Fresh water | Pure `analyzeFreshWater`: river edge on tile OR adjacent lake |
+| Yields | Pure `calculateTileYields` — display-only base table; does not affect growth |
+| Right column | Overview (events + civ expand), Cities (search/filter/select), World (metrics) |
+| Events | Normalize missing/unknown; newest first; click centers related city when resolvable |
+| Selection | Runtime-only; never dirties session or triggers save |
+| Verification | `npm run verify:active-context` |
 
 ---
 

@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F10 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets (F8), New Game wizard (F9), and Active Game shell with isolated session runtime + turn simulation (F10). Scratch editor remains at `/library/maps/current/edit`.
+**F1–F11 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets (F8), New Game wizard (F9), Active Game shell (F10), and contextual tile/city popups with expanded right panels (F11). Scratch editor remains at `/library/maps/current/edit`.
 
-F11 contextual popups/panels and F12 debug editing remain queued. Legacy World Editor Sim can still run a local play loop separately from Active Game.
+F12 debug editing remains queued. Buildings, characters, and real city actions are planned UI only.
 
 ---
 
@@ -152,19 +152,36 @@ Implemented:
 - Pure `applyTurn` preserves growth → culture → annexation → year/turn formulas.
 - Autosave after Next Turn + explicit Save Game; save status + Retry Save.
 - Optional structured `GameSession.events` (growth summary, culture, annexation, turn completed).
-- MapCanvas `view` mode: pan/zoom/select only; compact tile/city selection strip.
+- MapCanvas `view` mode: pan/zoom/select only; F11 replaces the compact strip with tile/city popups.
 - Main Menu Continue Game opens most recently updated session.
 - Verification: `npm run verify:active-game`.
 
 Known limitations:
-- Cities/World tabs are summaries; full F11 popups/actions deferred.
+- Cities/World tabs were expanded in F11; full diplomacy/fog still deferred.
 - No units/combat/diplomacy/fog/victory.
 - No full saved-games catalog (Continue = latest only).
-- Food/production yields not shown (no yield model yet).
+- Informational tile yields do not affect growth.
 
-### F11–F12 — Not started
+### F11 — Context Popups and Information Panels (Done)
 
-Next: **F11 Context Popups and Information Panels**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- Tile popup: landscape, fresh water, display-only yields, ownership; Escape closes.
+- City popup: real params + planned Buildings/Characters; Build disabled; Actions planned dialog.
+- Overview: clickable events (center), expandable civ summaries.
+- Cities: search + ownership filters + select/center/open popup.
+- World: terrain/land-water/city/civ/rules metrics.
+- Pure helpers: `freshWater`, `yields`, `contextSelectors`, `events`.
+- Popup positioning: map-edge overlay (camera anchor deferred).
+- Verification: `npm run verify:active-context`.
+
+Known limitations:
+- No camera-anchored popup follow.
+- No real buildings/characters/Build mechanics.
+- Beauty remains Planned.
+
+### F12 — Not started
+
+Next: **F12 Debug Editing Boundary**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -252,19 +269,20 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 - Procedural map generation is accepted as imperfect (see M2 above) — don't assume it will produce a recognizable or always-connected world.
 - Earth-like generation is regenerable but stylized and seed-dependent; forced bridges/straits improve Eurasia–Africa connectivity but do not guarantee Civ5-level geography.
-- Focused verification scripts exist for domain/persistence/catalogs/editor/layers/rules/new-game (`verify:*`); there is still no large end-to-end UI test framework.
+- Focused verification scripts exist for domain/persistence/catalogs/editor/layers/rules/new-game/active-game/active-context (`verify:*`); there is still no large end-to-end UI test framework.
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
 - Continue Game opens the most recent session only (no full catalog/delete/rename yet).
 - New Game wizard does not autosave drafts; refresh resets setup.
-- Active Game Cities/World tabs and selection strip are minimal; F11 expands contextual UI.
+- Active Game Cities/World panels and context popups are F11; buildings/characters remain planned-only.
+- Informational tile yields are display-only and do not affect growth.
 - World Editor catalog path is `/library/maps/:mapId/edit` with Save; scratch path `/library/maps/current/edit` has no catalog binding.
 
 ---
 
 ## 5. Nearest Next Steps
 
-1. **F11 — Context Popups and Information Panels** (tile/city detail, richer Overview).
-2. M5 event log on the legacy Sim path remains open; F12 debug editing after F11.
+1. **F12 — Debug Editing Boundary** (session-only live edit with safeguards).
+2. Optional: camera-anchored popups; richer M5 narrative event copy.
 
 ---
 
@@ -295,6 +313,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F11 Context Popups and Information Panels
+
+- Classification: Significant
+- Summary: Added tile/city context popups (map-edge overlay), fresh-water helper, display-only yield table, expanded Overview/Cities/World panels, event click-to-center, expandable civ summaries; `npm run verify:active-context`. No new gameplay formulas.
+- Files: `src/gameSession/{freshWater,yields,contextSelectors,events,verifyContext}*`, `src/components/activeGame/*`, `ActiveGamePage.tsx`, `MapCanvas.tsx`, CSS, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS (LF warnings); all verify:* including `verify:active-context` PASS; interactive browser checklist NOT exhaustively run
 
 ### 2026-07-12 — F10 Active Game Shell
 
@@ -399,6 +424,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F11 Context Popups and Information Panels
+
+- Area: Product / Architecture / UX
+- Change: Active Game shows contextual tile and city information via map-edge overlay popups. Fresh-water and informational tile yields are pure display helpers. Right column Cities/World panels and event/civ interactions are functional without introducing buildings, production, or other deferred systems.
+- Reason: Completes the agreed information architecture before debug editing (F12).
+- Source of truth: `ARCHITECTURE.md` §3.10, `PRODUCT_RULES.md` (fresh water / yields), `src/components/activeGame/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F11
 
 ### 2026-07-12 — F10 Active Game Shell
 

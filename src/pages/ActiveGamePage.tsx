@@ -1,34 +1,40 @@
 import { useEffect, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { MapCanvas } from '../components/MapCanvas'
+import { CitiesPanel } from '../components/activeGame/CitiesPanel'
+import { CityPopup } from '../components/activeGame/CityPopup'
+import { CivilizationsSummary } from '../components/activeGame/CivilizationsSummary'
+import { EventsPanel } from '../components/activeGame/EventsPanel'
+import { TilePopup } from '../components/activeGame/TilePopup'
+import { WorldPanel } from '../components/activeGame/WorldPanel'
+import { Badge, Button, EmptyState, SegmentedControl } from '../components/ui'
 import {
-  Badge,
-  Button,
-  EmptyState,
-  SegmentedControl,
-} from '../components/ui'
+  buildCityContext,
+  buildTileContext,
+  computeWorldMetrics,
+  sanitizeSelection,
+} from '../gameSession/contextSelectors'
+import { resolveEventFocus, toEventDisplayItems } from '../gameSession/events'
 import {
-  eventsNewestFirst,
   isAtMaximumTurns,
   primaryPlayerSummary,
+  resolveHumanCivilization,
   summarizeAllCivilizations,
   useActiveGameStore,
 } from '../gameSession'
+import { tileKey } from '../game/hexGrid'
+import type { GameCity } from '../domain/gameSession'
+import type { CivSummary } from '../gameSession/selectors'
+import type { EventDisplayItem } from '../gameSession/events'
 
 function formatYear(year: number): string {
   return year < 0 ? `${Math.abs(year)} BCE` : `${year} CE`
 }
 
-function formatSavedAt(iso: string | null): string {
-  if (!iso) return '—'
-  try {
-    return new Date(iso).toLocaleString()
-  } catch {
-    return iso
-  }
-}
-
-function saveBadge(status: string): { tone: 'neutral' | 'success' | 'warning' | 'danger' | 'info'; label: string } {
+function saveBadge(status: string): {
+  tone: 'neutral' | 'success' | 'warning' | 'danger' | 'info'
+  label: string
+} {
   if (status === 'saving') return { tone: 'info', label: 'Saving…' }
   if (status === 'saved') return { tone: 'success', label: 'Saved' }
   if (status === 'error') return { tone: 'danger', label: 'Save error' }
@@ -43,6 +49,8 @@ export function ActiveGamePage() {
   const reset = useActiveGameStore((s) => s.reset)
 
   const name = useActiveGameStore((s) => s.name)
+  const width = useActiveGameStore((s) => s.width)
+  const height = useActiveGameStore((s) => s.height)
   const tiles = useActiveGameStore((s) => s.tiles)
   const cities = useActiveGameStore((s) => s.cities)
   const civilizations = useActiveGameStore((s) => s.civilizations)
@@ -78,25 +86,95 @@ export function ActiveGamePage() {
     }
   }, [gameId, loadSession, reset])
 
+  // Clear stale selection without dirtying the session
+  useEffect(() => {
+    const next = sanitizeSelection(selectedTileKey, tiles, cities)
+    if (next !== selectedTileKey) selectTile(next)
+  }, [tiles, cities, selectedTileKey, selectTile])
+
   const player = useMemo(
     () => primaryPlayerSummary(civilizations, cities),
     [civilizations, cities],
   )
+  const human = useMemo(() => resolveHumanCivilization(civilizations), [civilizations])
   const civSummaries = useMemo(
     () => summarizeAllCivilizations(civilizations, cities),
     [civilizations, cities],
   )
-  const recentEvents = useMemo(() => eventsNewestFirst(events).slice(0, 40), [events])
-  const atMax = isAtMaximumTurns(turn, maximumTurns)
-  const saveMeta = saveBadge(dirty && saveStatus !== 'saving' && saveStatus !== 'error' ? 'idle' : saveStatus)
+  const eventItems = useMemo(() => toEventDisplayItems(events), [events])
+  const worldMetrics = useMemo(
+    () =>
+      computeWorldMetrics({
+        tiles,
+        cities,
+        civilizations,
+        width,
+        height,
+        sourceMap,
+        turn,
+        currentYear,
+        yearsPerTurn,
+        maximumTurns,
+        rules,
+      }),
+    [
+      tiles,
+      cities,
+      civilizations,
+      width,
+      height,
+      sourceMap,
+      turn,
+      currentYear,
+      yearsPerTurn,
+      maximumTurns,
+      rules,
+    ],
+  )
 
-  const selectedTile = selectedTileKey ? tiles[selectedTileKey] : null
-  const selectedCity = selectedTile?.cityId
-    ? cities.find((c) => c.id === selectedTile.cityId) ?? null
-    : null
-  const selectedCiv = selectedCity?.civId
-    ? civilizations.find((c) => c.id === selectedCity.civId) ?? null
-    : null
+  const atMax = isAtMaximumTurns(turn, maximumTurns)
+  const saveMeta = saveBadge(
+    dirty && saveStatus !== 'saving' && saveStatus !== 'error' ? 'idle' : saveStatus,
+  )
+
+  const tileContext = useMemo(
+    () => (selectedTileKey ? buildTileContext(tiles, civilizations, selectedTileKey) : null),
+    [selectedTileKey, tiles, civilizations],
+  )
+
+  const cityContext = useMemo(() => {
+    if (!tileContext?.cityId) return null
+    return buildCityContext(cities, civilizations, rules, tileContext.cityId, human?.id ?? null)
+  }, [tileContext?.cityId, cities, civilizations, rules, human?.id])
+
+  // Escape closes tile popup (city popup handles its own Escape when dialog closed)
+  useEffect(() => {
+    if (!tileContext || cityContext) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') selectTile(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [tileContext, cityContext, selectTile])
+
+  function selectAndFocusCity(city: GameCity) {
+    selectTile(tileKey(city.coord))
+    focusCoord(city.coord)
+  }
+
+  function onFocusEvent(item: EventDisplayItem) {
+    const focus = resolveEventFocus(item, cities)
+    if (!focus) return
+    selectTile(focus.tileKey)
+    focusCoord(focus.coord)
+  }
+
+  function onFocusCapital(summary: CivSummary) {
+    if (summary.capitalCoord) {
+      selectTile(tileKey(summary.capitalCoord))
+      focusCoord(summary.capitalCoord)
+    }
+  }
 
   if (loadStatus === 'loading' || loadStatus === 'idle') {
     return (
@@ -170,8 +248,8 @@ export function ActiveGamePage() {
               <div>
                 <strong>{player.summary.name}</strong>
                 <div className="active-game-topbar__muted">
-                  Capital {player.summary.capitalName ?? '—'} · {player.summary.cityCount} cities · pop{' '}
-                  {player.summary.totalPopulation} · culture {player.summary.capitalCulture}
+                  Capital {player.summary.capitalName ?? '—'} · {player.summary.cityCount} cities ·
+                  pop {player.summary.totalPopulation} · culture {player.summary.capitalCulture}
                 </div>
               </div>
             </>
@@ -240,72 +318,10 @@ export function ActiveGamePage() {
             }}
           />
 
-          {selectedTile ? (
-            <aside className="active-game-selection" aria-label="Selected tile">
-              <div className="active-game-selection__header">
-                <strong>
-                  Hex ({selectedTile.coord.q}, {selectedTile.coord.r})
-                  {selectedCity ? ` · ${selectedCity.name}` : ''}
-                </strong>
-                <Button variant="ghost" size="sm" type="button" onClick={() => selectTile(null)}>
-                  Close
-                </Button>
-              </div>
-              <dl className="active-game-selection__dl">
-                <div>
-                  <dt>Terrain</dt>
-                  <dd>{selectedTile.terrain}</dd>
-                </div>
-                <div>
-                  <dt>Feature</dt>
-                  <dd>{selectedTile.vegetation}</dd>
-                </div>
-                <div>
-                  <dt>Hills</dt>
-                  <dd>{selectedTile.hasHills ? 'yes' : 'no'}</dd>
-                </div>
-                <div>
-                  <dt>Resource</dt>
-                  <dd>{selectedTile.resource}</dd>
-                </div>
-                <div>
-                  <dt>River</dt>
-                  <dd>{selectedTile.riverDirections.length > 0 ? 'yes' : 'no'}</dd>
-                </div>
-                {selectedCity ? (
-                  <>
-                    <div>
-                      <dt>City</dt>
-                      <dd>
-                        {selectedCity.name}
-                        {selectedCity.isCapital ? ' (capital)' : ''}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Owner</dt>
-                      <dd>
-                        {selectedCiv
-                          ? `${selectedCiv.flagEmoji} ${selectedCiv.name}`
-                          : 'Unclaimed'}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Population</dt>
-                      <dd>{selectedCity.population}</dd>
-                    </div>
-                    <div>
-                      <dt>Culture</dt>
-                      <dd>{selectedCity.culture}</dd>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <dt>Owner</dt>
-                    <dd>{selectedTile.ownerCivId ?? 'none'}</dd>
-                  </div>
-                )}
-              </dl>
-            </aside>
+          {cityContext ? (
+            <CityPopup context={cityContext} onClose={() => selectTile(null)} />
+          ) : tileContext ? (
+            <TilePopup context={tileContext} onClose={() => selectTile(null)} />
           ) : null}
         </div>
 
@@ -331,120 +347,32 @@ export function ActiveGamePage() {
                   <h3 id="events-heading" className="active-game-section-title">
                     Notifications &amp; Events
                   </h3>
-                  {recentEvents.length === 0 ? (
-                    <p className="active-game-muted">No events yet. End a turn to begin the log.</p>
-                  ) : (
-                    <ul className="active-game-events" aria-live="polite">
-                      {recentEvents.map((evt) => (
-                        <li key={evt.id} className="active-game-events__item">
-                          <span className="active-game-events__meta">
-                            T{evt.turn} · {formatYear(evt.year)} · {evt.type}
-                          </span>
-                          <span>{evt.message}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <EventsPanel items={eventItems} onFocusEvent={onFocusEvent} />
                 </section>
 
                 <section aria-labelledby="civs-heading">
                   <h3 id="civs-heading" className="active-game-section-title">
                     Civilizations
                   </h3>
-                  <ul className="active-game-civ-list">
-                    {civSummaries.map((civ) => (
-                      <li key={civ.id}>
-                        <button
-                          type="button"
-                          className="active-game-civ-btn"
-                          onClick={() => {
-                            if (civ.capitalCoord) focusCoord(civ.capitalCoord)
-                          }}
-                          title={
-                            civ.capitalCoord
-                              ? `Center on ${civ.capitalName}`
-                              : 'No capital to center'
-                          }
-                        >
-                          <span aria-hidden="true">{civ.flagEmoji}</span>
-                          <span className="active-game-civ-btn__body">
-                            <strong>
-                              {civ.name}{' '}
-                              <Badge tone={civ.playerType === 'human' ? 'success' : 'neutral'}>
-                                {civ.playerType}
-                              </Badge>
-                            </strong>
-                            <span className="active-game-muted">
-                              Cap {civ.capitalName ?? '—'} · {civ.cityCount} cities · pop{' '}
-                              {civ.totalPopulation} · culture {civ.capitalCulture}
-                            </span>
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <CivilizationsSummary
+                    summaries={civSummaries}
+                    cities={cities}
+                    onFocusCapital={onFocusCapital}
+                  />
                 </section>
               </>
             ) : null}
 
             {panelTab === 'cities' ? (
-              <section>
-                <h3 className="active-game-section-title">Cities</h3>
-                <p className="active-game-muted">
-                  Read-only list for F10. Full city actions arrive in F11.
-                </p>
-                <ul className="active-game-city-list">
-                  {cities.map((city) => {
-                    const civ = city.civId
-                      ? civilizations.find((c) => c.id === city.civId)
-                      : null
-                    return (
-                      <li key={city.id}>
-                        <button
-                          type="button"
-                          className="active-game-civ-btn"
-                          onClick={() => {
-                            const key = `${city.coord.q},${city.coord.r}`
-                            selectTile(key)
-                            focusCoord(city.coord)
-                          }}
-                        >
-                          <span>
-                            {city.name}
-                            {city.isCapital ? ' 👑' : ''} · pop {city.population} ·{' '}
-                            {civ ? `${civ.flagEmoji} ${civ.name}` : 'Unclaimed'}
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </section>
+              <CitiesPanel
+                cities={cities}
+                civilizations={civilizations}
+                onSelectCity={selectAndFocusCity}
+              />
             ) : null}
 
             {panelTab === 'world' ? (
-              <section>
-                <h3 className="active-game-section-title">World</h3>
-                <dl className="active-game-selection__dl">
-                  <div>
-                    <dt>Map</dt>
-                    <dd>{sourceMap?.templateName ?? 'Session map'}</dd>
-                  </div>
-                  <div>
-                    <dt>Rules</dt>
-                    <dd>
-                      {rules
-                        ? `growth ${rules.settings.baseGrowthRate}, culture ${rules.settings.capitalCulturePerTurn}/turn, annex ${rules.settings.cultureAnnexThreshold}`
-                        : '—'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Last saved</dt>
-                    <dd>{formatSavedAt(lastSavedAt)}</dd>
-                  </div>
-                </dl>
-                <p className="active-game-muted">World diplomacy and fog of war are deferred.</p>
-              </section>
+              <WorldPanel metrics={worldMetrics} lastSavedAt={lastSavedAt} />
             ) : null}
           </div>
 

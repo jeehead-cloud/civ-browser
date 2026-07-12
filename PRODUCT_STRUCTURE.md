@@ -549,7 +549,7 @@ The active game follows the Civilization V principle:
 - the right column contains secondary information;
 - the top panel contains compact game status.
 
-F10 implements this shell for `/games/:gameId` with an isolated session runtime, Next Turn, autosave, and minimal tile/city selection. Full contextual popups remain F11.
+F10 implements the shell for `/games/:gameId` with an isolated session runtime, Next Turn, and autosave. **F11** completes contextual tile/city popups and expanded Overview/Cities/World panels.
 
 Main structure:
 
@@ -557,8 +557,10 @@ Main structure:
 Top status bar
 Large central map
 Right information column
-Compact selection strip (F10) / contextual popups (F11)
+Map-edge context popup (tile or city; one at a time)
 ```
+
+Popup positioning: stable overlay at the map edge (bottom-left of the map column). Camera-anchored follow is deferred so Canvas pan/zoom stays stable.
 
 ---
 
@@ -644,6 +646,31 @@ A unit is waiting for orders
 A city has no production
 ```
 
+### 17.6. Cities Panel (F11)
+
+Read-only list of all cities in the session:
+
+- name, owner/flag, population, capital, culture, coordinates;
+- search;
+- filters: All / Human-owned / AI-owned / unclaimed;
+- click: select city, center map, open city popup.
+
+No city editing.
+
+### 17.7. World Panel (F11)
+
+Read-only session/map summary:
+
+- map/source name, dimensions;
+- tile counts by terrain; land/water;
+- city counts (claimed/unclaimed);
+- civilization count;
+- year, turn, years per turn, max turns;
+- rules snapshot summary;
+- optional resource / river counts.
+
+Selectors are pure and suitable for memoization.
+
 ---
 
 ## 18. Top Information Bar
@@ -687,9 +714,7 @@ Indicators may become clickable and open the relevant right-side information pan
 
 ## 19. Tile Popup
 
-Clicking a normal tile opens a compact information popup.
-
-The popup shows:
+Clicking a non-city tile opens a compact information popup (F11). Escape closes; another click replaces content. No gameplay actions.
 
 ### Landscape
 
@@ -700,108 +725,74 @@ The popup shows:
 
 ### Water
 
-- river on the tile boundary;
-- river on neighboring tiles;
-- fresh-water access;
-- adjacency to lake.
+- river on the tile boundary (`riverOnTile`);
+- river on neighboring tiles (`riverNearby`);
+- adjacent lake;
+- fresh-water access (`riverOnTile` OR adjacent lake) — see `PRODUCT_RULES.md`.
 
 ### Yield
 
-- food;
-- production;
-- beauty later.
+- food / production as **base tile yield** (display-only; see `PRODUCT_RULES.md`);
+- beauty: Planned (not stored).
 
 ### Ownership
 
-- owning civilization;
-- neutral if unclaimed.
+- owning civilization or neutral/unclaimed.
 
-The tile popup is informational and contains no gameplay actions.
+Optional muted coordinates for debugging.
 
 ---
 
 ## 20. City Popup
 
-Clicking a city opens a city popup.
+Clicking a city tile opens a city popup (F11). One contextual popup at a time; Escape closes.
 
 ### 20.1. Header
 
 - city name;
-- city emblem;
+- emblem placeholder / badge;
 - city culture;
-- founding year.
+- founding year: **Unknown** when not stored (do not invent dates);
+- capital badge when applicable.
 
 ### 20.2. Owner
 
 - civilization name;
-- flag.
+- flag;
+- Human / AI;
+- no fake diplomacy/relationship.
 
 ### 20.3. Characters in the City
 
-Shown only when present.
-
-Each character card shows:
-
-- image;
-- name;
-- role;
-- effects.
+**Planned** in F11 — no character persistence yet. Show a planned placeholder; do not invent characters.
 
 ### 20.4. Main City Parameters
 
-Initial and future parameters may include:
+Show real fields only:
 
 - population;
-- production;
-- science;
 - culture;
-- mood;
-- health;
-- security;
-- religion;
-- trade;
-- loyalty;
-- development level.
+- growth rate / growth bonus;
+- capital status.
+
+Production, science, mood, and similar metrics are omitted or marked Planned when not implemented — never show `0` as if real.
 
 ### 20.5. Buildings
 
-Shows built buildings.
-
-Clicking a building opens information about it:
-
-- name;
-- description;
-- effects;
-- construction date later;
-- maintenance later;
-- available actions later.
+**Not implemented** in F11. Do not treat `productionQueue` as completed buildings. No building info popover without real data.
 
 ### 20.6. Actions
 
-For a player-owned city:
+For a Human-owned city:
 
-```text
-Build
-Actions
-```
+- `Build` — disabled / planned (no production system);
+- `Actions` — opens an informational dialog listing future actions as unavailable.
 
-`Build` opens building selection.
+For a foreign city:
 
-For any city, including foreign cities:
+- `Actions` — planned/unavailable only; no state mutation.
 
-```text
-Actions
-```
-
-Future examples:
-
-- send embassy;
-- start trade;
-- launch spy operation;
-- demand tribute;
-- other diplomacy or city actions.
-
-Unavailable mechanics should not appear in the working UI until implemented.
+Unavailable mechanics must not fake success.
 
 ---
 
@@ -988,7 +979,7 @@ Before adding units, combat, diplomacy, great people, espionage, or other large 
 5. rules presets;
 6. New Game wizard (done — F9);
 7. separation between map templates and game sessions (done — F2/F9);
-8. separate editor and active-game screens (done — F5/F6 editor, F10 Active Game);
+8. separate editor and active-game screens (done — F5/F6 editor, F10–F11 Active Game);
 9. local persistence (done — F3);
 10. staged map-generation tools (done — F7);
 11. display layers (done — F6);

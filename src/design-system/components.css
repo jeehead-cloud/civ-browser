@@ -1852,3 +1852,175 @@
     max-height: 50vh;
   }
 }
+
+/* ---- Active Game context popups / panels (F11) ---- */
+.active-context-popup {
+  position: absolute;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  width: min(340px, calc(100% - 2rem));
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 6;
+}
+
+.active-context-popup--city {
+  width: min(360px, calc(100% - 2rem));
+}
+
+.active-context-popup__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.active-context-popup__city-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.active-context-popup__emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-panel-raised);
+  border: 1px solid var(--border-subtle);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.active-context-popup__title {
+  margin: 0;
+  font-size: var(--text-size-md);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.active-context-popup__coords {
+  margin: var(--space-1) 0 0;
+  color: var(--text-tertiary);
+  font-size: var(--text-size-xs);
+  font-family: var(--font-mono);
+}
+
+.active-context-popup__section {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.active-context-popup__section h4 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.active-context-popup__dl {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.active-context-popup__dl > div {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: var(--space-2);
+  font-size: var(--text-size-sm);
+}
+
+.active-context-popup__dl dt {
+  margin: 0;
+  color: var(--text-tertiary);
+}
+
+.active-context-popup__dl dd {
+  margin: 0;
+}
+
+.active-context-popup__hint {
+  margin: var(--space-2) 0 0;
+  color: var(--text-tertiary);
+  font-size: var(--text-size-xs);
+}
+
+.active-context-popup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: var(--space-4);
+}
+
+.active-context-planned-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+}
+
+.active-game-events__btn {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  background: var(--surface-card);
+}
+
+.active-game-events__btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.active-civ-detail {
+  margin: var(--space-2) 0 var(--space-3) 2rem;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.active-civ-detail__cities {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--text-size-sm);
+}
+
+.active-cities-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.active-world-terrain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-size-sm);
+}
+
+.active-world-terrain li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}

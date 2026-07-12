@@ -12,7 +12,7 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library/maps/current/edit` | Scratch World Editor | scenario-editor kit | Scratch + F6 layout | **Working** same shell; not catalog-backed |
 | `/settings` | Settings & Balance | Panel + category nav | F8 | **Working** rules preset editor |
 | `/games/new` | New Game | Wizard shell | F9 | **Working** |
-| `/games/:gameId` | Active Game | `ui_kits/game-session` | F10 | **Working** (F11 popups pending) |
+| `/games/:gameId` | Active Game | `ui_kits/game-session` | F10+F11 | **Working** (context popups + panels) |
 | `*` | Not Found | App shell empty state | F1 | **Styled** |
 
 ---
@@ -23,7 +23,7 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 - Regions: page header, primary action stack, temporary editor entry.
 - Components: PageHeader, SectionHeader, Button, CardLink, Badge, EmptyState.
-- Deferred: Continue Game full catalog (F10 opens latest session only); F11 HUD polish.
+- Deferred: Continue Game full catalog (F10 opens latest session only).
 
 ### Library `/library`
 
@@ -67,9 +67,10 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ### Active Game `/games/:gameId`
 
-- F10: loads GameSession into isolated runtime; top bar; map (view-only); Overview events + civ list; Next Turn with autosave; Save Game; Continue from Main Menu.
-- Minimal tile/city selection strip (not full F11 popups).
-- Deferred F11: richer contextual panels, buildings/actions, denser HUD.
+- F10: loads GameSession into isolated runtime; top bar; map (view-only); Next Turn with autosave; Save Game; Continue from Main Menu.
+- F11: tile/city context popups (map-edge overlay); Overview events (click-to-center) + expandable civ summaries; Cities search/filter/select; World metrics; Escape closes popup.
+- Components: Panel, Card, Badge, Button, Tabs/SegmentedControl, Input, EmptyState, Dialog, Accordion; active-game popup/event patterns in `src/components/activeGame/`.
+- Deferred: camera-anchored popups; real Build/buildings/characters; diplomacy/fog; full saved-games catalog.
 
 ### Not Found `*`
 
@@ -77,6 +78,6 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ---
 
-## Explicitly deferred from D1 / remaining after F6
+## Explicitly deferred from D1 / remaining after F11
 
-Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, F11 contextual popups/actions.
+Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, real Build/buildings/characters, camera-anchored popups.

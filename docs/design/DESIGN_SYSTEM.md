@@ -103,6 +103,8 @@ Implemented under `src/components/ui/`:
 
 Button (primary/secondary/ghost/danger × sm/md/lg), IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog (Esc to close), ConfirmDialog, FormField, Accordion, SegmentedControl.
 
+Active Game (F11) also uses feature-local patterns under `src/components/activeGame/` (TilePopup, CityPopup, EventsPanel, Metric-style World stats) composed from Atlas primitives; no separate Popover primitive was added — popups are map-edge overlay cards.
+
 F8 also uses `ParameterField` (`src/components/rules/ParameterField.tsx`) for labeled numeric/percentage balance parameters with changed badges and reset-field actions.
 
 F9 wizard helpers (`src/components/newGame/`):

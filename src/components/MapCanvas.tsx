@@ -260,12 +260,21 @@ export function MapCanvas({ view, className }: MapCanvasProps) {
       if (layers.cities && tile.cityId) {
         const city = cities.find((c) => c.id === tile.cityId)
         const radius = Math.max(4, 9 * camera.zoom)
+        const isSelectedCity = selectedKey === key
         ctx.beginPath()
         ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2)
         ctx.fillStyle = '#fff'
         ctx.fill()
-        ctx.strokeStyle = '#000'
+        ctx.strokeStyle = isSelectedCity ? '#fbbf24' : '#000'
+        ctx.lineWidth = isSelectedCity ? Math.max(2, 2.5 * camera.zoom) : 1
         ctx.stroke()
+        if (isSelectedCity) {
+          ctx.beginPath()
+          ctx.arc(screen.x, screen.y, radius + 3 * camera.zoom, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(251, 191, 36, 0.7)'
+          ctx.lineWidth = 1
+          ctx.stroke()
+        }
         if (city && camera.zoom > 0.08) {
           ctx.fillStyle = '#000'
           ctx.font = `bold ${Math.max(8, 9 * camera.zoom)}px sans-serif`
@@ -275,6 +284,11 @@ export function MapCanvas({ view, className }: MapCanvasProps) {
           ctx.textBaseline = 'alphabetic'
           ctx.font = `bold ${10 * camera.zoom}px sans-serif`
           ctx.fillText(city.name, screen.x, screen.y - radius - 4 * camera.zoom)
+          if (isSelectedCity) {
+            ctx.fillStyle = '#fbbf24'
+            ctx.font = `${9 * camera.zoom}px sans-serif`
+            ctx.fillText('Selected', screen.x, screen.y + radius + 10 * camera.zoom)
+          }
         }
         if (layers.ownershipFlags && city && city.civId) {
           const civ = civilizations.find((c) => c.id === city.civId)

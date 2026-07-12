@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F10 done; F11+ queued)
+**Status:** Active (F1–F11 done; F12 queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -179,7 +179,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F8 | Rules Presets | Scalable settings and balance system | **Done** |
 | F9 | New Game Wizard | Create game sessions from templates | **Done** |
 | F10 | Active Game Shell | Separate gameplay UI | **Done** |
-| F11 | Context Popups and Panels | Tile, city, events, civilization summaries | Queued |
+| F11 | Context Popups and Panels | Tile, city, events, civilization summaries | **Done** |
 | F12 | Debug Editing Boundary | Safe live editing of current session only | Queued |
 
 ---
@@ -911,6 +911,8 @@ Layout:
 
 # 15. F11 — Context Popups and Information Panels
 
+**Status: Implemented** (tile/city popups; fresh water; informational yields; Overview/Cities/World; event focus).
+
 ## Goal
 
 Implement the agreed gameplay information structure.
@@ -920,58 +922,46 @@ Implement the agreed gameplay information structure.
 ### Right Column Default
 
 - panel switcher;
-- notifications and events;
-- civilization summary list;
+- notifications and events (click-to-center);
+- civilization summary list (expand + capital focus);
 - year;
 - turn;
 - Next Turn.
 
 ### Tile Popup
 
-- terrain;
-- feature;
-- hills/mountains;
-- resource;
-- river on tile boundary;
-- nearby river;
-- fresh-water access;
-- food;
-- production;
-- beauty later;
-- owner.
+- terrain / feature / hills/mountains / resource;
+- river on tile, river nearby, adjacent lake, fresh water;
+- informational food/production (display-only); beauty planned;
+- owner;
+- map-edge overlay positioning (camera-anchored popups deferred).
 
 ### City Popup
 
-- name;
-- emblem;
-- culture;
-- founding year;
-- owner;
-- flag;
-- characters;
-- population;
-- production;
-- science;
-- culture;
-- mood;
-- buildings;
-- Build action for player city;
-- Actions for any city.
+- name, emblem placeholder, culture, founding year Unknown, capital badge;
+- owner / flag / Human|AI;
+- characters/buildings/production/science/mood marked planned or not implemented;
+- Build disabled; Actions opens planned-only dialog (no state mutation).
 
 ## Deliverables
 
-- popup components;
-- object selection behavior;
-- event list;
-- civilization summary panel.
+- `src/components/activeGame/*` popups and panels;
+- pure helpers: `freshWater`, `yields`, `contextSelectors`, `events`;
+- `npm run verify:active-context`.
+
+## Justified deviations
+
+- Popup uses a stable map-edge overlay instead of camera-anchored positioning.
+- No real Build/buildings/characters systems — honest planned/disabled UI only.
+- Yields are informational and do not affect growth.
 
 ## Acceptance Criteria
 
 - clicking a normal tile opens tile popup;
 - clicking a city opens city popup;
-- own city shows available actions;
-- foreign city stays informational except generic Actions;
-- `npm run build` passes.
+- own/foreign actions are nonfunctional and clearly planned;
+- `npm run build` passes;
+- `npm run verify:active-context` passes.
 
 ---
 

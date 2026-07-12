@@ -108,7 +108,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F8 | Rules Presets (Settings & Balance) | Done |
 | F9 | New Game Wizard | Done |
 | F10 | Active Game Shell | Done |
-| F11–F12 | Context popups, debug editing | Queued |
+| F11 | Context Popups and Information Panels | Done |
+| F12 | Debug Editing Boundary | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

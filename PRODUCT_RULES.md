@@ -131,22 +131,75 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 
 - **Edit mode**: clicking a hex paints according to the active World Builder tool (terrain, resource, hills, vegetation, river, or city). This is the only mode where the World Builder toolbar controls are shown.
 - **View mode**: clicking a hex opens an info popup (`TileInfoPanel`) showing terrain/vegetation/hills/resource/river state, and — if the tile has a city — the city's name, population, owning civilization, culture output (if capital), and total growth rate. No painting happens in View mode.
-- Active Game (F10) is always view-only on the session map: clicks select tiles/cities for a compact strip, never paint.
+- Active Game (F10/F11) is always view-only on the session map: clicks open tile/city context popups, never paint. Selection is runtime-only and does not dirty or save the session.
 - Starting a legacy Sim game (pressing "Играть") force-switches to View mode. The owner can still manually flip back to Edit mode from the toolbar even during Play phase — this is intentional for the Sim only.
 
 ---
 
-## 10. Event Log
+## 10. Fresh Water (Active Game display)
 
-Active Game (F10) persists optional structured `GameSession.events` with types such as `growth_summary`, `culture_generated`, `annexation`, and `turn_completed` (id, turn, year, message, data, related ids).
+Fresh water is a **display** concept for the tile popup (F11). Rivers remain edge properties (`riverDirections`), not terrain types.
 
-- Prefer structured records over pre-formatted-only strings so the log can be filtered/localized later.
-- The legacy World Editor Sim `endTurn()` still does not write `GameSession.events`.
-- Richer narrative / localization remains open for M5/F11 polish.
+For a tile, expose:
+
+- `riverOnTile` — at least one river edge on this tile;
+- `riverNearby` — at least one adjacent tile has a river edge;
+- `adjacentLake` — at least one adjacent tile has terrain `lake`;
+- `freshWater` — **true** when `riverOnTile` **or** `adjacentLake`.
+
+`riverNearby` alone does **not** grant fresh water.
 
 ---
 
-## 11. Explicitly Deferred Mechanics
+## 11. Informational Tile Yields (Active Game display)
+
+F11 shows **base tile yield** on the tile popup. These values are **display-only** and do **not** affect city growth, culture, annexation, or any other gameplay formula.
+
+### Rules
+
+- Calculate from terrain + hills + feature/vegetation only.
+- Resource bonuses are **omitted** until a product rule defines them.
+- Beauty is **not** stored; show as Planned only.
+- Mountains (and other unworkable terrain) show 0/0 and `workable: false`.
+
+### Base terrain
+
+| Terrain | Food | Production | Workable |
+|---|---:|---:|---|
+| ocean | 1 | 0 | yes |
+| coast | 1 | 0 | yes |
+| lake | 2 | 0 | yes |
+| plains | 1 | 1 | yes |
+| grassland | 2 | 0 | yes |
+| mountains | 0 | 0 | no |
+| desert | 0 | 0 | yes |
+| tundra | 1 | 0 | yes |
+| snow | 0 | 0 | yes |
+
+### Modifiers (workable tiles only)
+
+- Hills on non-water land: **+1 production**.
+- Forest: **+1 production**.
+- Jungle: **+1 food**.
+- Swamp: **+1 food**.
+
+Source of truth in code: `src/gameSession/yields.ts`.
+
+---
+
+## 12. Event Log
+
+Active Game (F10/F11) persists optional structured `GameSession.events` with types such as `growth_summary`, `culture_generated`, `annexation`, and `turn_completed` (id, turn, year, message, data, related ids).
+
+- Prefer structured records over pre-formatted-only strings so the log can be filtered/localized later.
+- Missing `events` normalize to `[]`; unknown types render as a safe generic item.
+- Overview events are newest first; clicking a related city centers the map when resolvable.
+- The legacy World Editor Sim `endTurn()` still does not write `GameSession.events`.
+- Full localization remains deferred.
+
+---
+
+## 13. Explicitly Deferred Mechanics
 
 The following are intentionally **not** implemented yet, and no feature should assume they exist:
 
@@ -156,11 +209,13 @@ The following are intentionally **not** implemented yet, and no feature should a
 - AI decision-making beyond the simple nearest-city annexation rule, and diplomacy (Milestone M8).
 - Multiplayer or human-vs-human play. F9/F10 use exactly one Human civilization in a GameSession. Legacy World Editor Sim still treats civilizations as AI-only.
 - Growth bonuses derived from terrain, resources, or buildings (only a manually-set flat per-city bonus exists today).
+- Wiring informational tile yields into growth or city working (F11 yields are display-only).
+- Buildings, characters, real Build/Actions, beauty as a stored yield.
 - Any server-side validation or persistence — see `DEPLOYMENT.md`.
 
 ---
 
-## 12. Rule Priority
+## 14. Rule Priority
 
 When two rules conflict, use this priority:
 

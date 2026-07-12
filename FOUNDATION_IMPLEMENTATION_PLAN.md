@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F9 done; F10+ queued)
+**Status:** Active (F1–F10 done; F11+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -178,7 +178,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | **Done** |
 | F8 | Rules Presets | Scalable settings and balance system | **Done** |
 | F9 | New Game Wizard | Create game sessions from templates | **Done** |
-| F10 | Active Game Shell | Separate gameplay UI | Queued |
+| F10 | Active Game Shell | Separate gameplay UI | **Done** |
 | F11 | Context Popups and Panels | Tile, city, events, civilization summaries | Queued |
 | F12 | Debug Editing Boundary | Safe live editing of current session only | Queued |
 
@@ -861,6 +861,8 @@ Validation:
 
 # 14. F10 — Active Game Shell
 
+**Status: Implemented** (dedicated runtime store; turn engine; autosave; map shell; Continue Game).
+
 ## Goal
 
 Move active gameplay into its own dedicated screen.
@@ -876,18 +878,25 @@ Route:
 Layout:
 
 - compact top information bar;
-- large map;
-- right information column;
-- contextual popups;
+- large map (read-only);
+- right information column (Overview / Cities / World);
+- minimal tile/city selection strip;
 - fixed Next Turn control.
 
 ## Deliverables
 
-- active session loading;
-- session autosave or explicit save strategy;
-- turn controls;
-- current year and turn display;
-- current MVP simulation preserved.
+- active session loading into `useActiveGameStore`;
+- autosave after End Turn + explicit Save Game;
+- turn controls using unchanged growth/culture/annexation formulas;
+- structured event log (optional `GameSession.events`);
+- Continue Game → most recent session;
+- `npm run verify:active-game`.
+
+## Justified deviations
+
+- Cities / World tabs are read-only summaries; full F11 contextual panels deferred.
+- Food/production yields are not shown (not honestly available without a yield model).
+- Legacy World Editor Sim turn path remains for scratch play; Active Game does not use it.
 
 ## Acceptance Criteria
 
@@ -895,7 +904,8 @@ Layout:
 - next turn updates only the current session;
 - session can be resumed after refresh;
 - source templates remain unchanged;
-- `npm run build` passes.
+- `npm run build` passes;
+- `npm run verify:active-game` passes.
 
 ---
 

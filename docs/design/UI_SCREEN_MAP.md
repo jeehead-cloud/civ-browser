@@ -12,7 +12,7 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library/maps/current/edit` | Scratch World Editor | scenario-editor kit | Scratch + F6 layout | **Working** same shell; not catalog-backed |
 | `/settings` | Settings & Balance | Panel + category nav | F8 | **Working** rules preset editor |
 | `/games/new` | New Game | Wizard shell | F9 | **Working** |
-| `/games/:gameId` | Active Game | `ui_kits/game-session` | F9 summary / F10 shell | **Persisted summary placeholder** |
+| `/games/:gameId` | Active Game | `ui_kits/game-session` | F10 | **Working** (F11 popups pending) |
 | `*` | Not Found | App shell empty state | F1 | **Styled** |
 
 ---
@@ -23,7 +23,7 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 - Regions: page header, primary action stack, temporary editor entry.
 - Components: PageHeader, SectionHeader, Button, CardLink, Badge, EmptyState.
-- Deferred: Continue Game sessions (F3/F9/F10).
+- Deferred: Continue Game full catalog (F10 opens latest session only); F11 HUD polish.
 
 ### Library `/library`
 
@@ -67,8 +67,9 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ### Active Game `/games/:gameId`
 
-- F9: loads persisted GameSession by id; shows name/map/turn/year/civilizations summary; states loading/error/not-found.
-- Full gameplay shell / turn controls: F10. Kit reference: game-session HUD.
+- F10: loads GameSession into isolated runtime; top bar; map (view-only); Overview events + civ list; Next Turn with autosave; Save Game; Continue from Main Menu.
+- Minimal tile/city selection strip (not full F11 popups).
+- Deferred F11: richer contextual panels, buildings/actions, denser HUD.
 
 ### Not Found `*`
 
@@ -78,4 +79,4 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ## Explicitly deferred from D1 / remaining after F6
 
-Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, final Active Game HUD (F10).
+Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, F11 contextual popups/actions.

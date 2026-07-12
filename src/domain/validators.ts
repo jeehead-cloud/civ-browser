@@ -1,7 +1,7 @@
 import { tileKey } from '../game/hexGrid'
 import type { Tile } from '../game/types'
 import type { CivilizationTemplate } from './civilizations'
-import type { GameSession } from './gameSession'
+import type { GameSession, GameSessionEvent } from './gameSession'
 import type { MapTemplate } from './maps'
 import type { GameRulesPreset, GameRulesSnapshot, GameRulesValues } from './rules'
 import { RULES_VALUE_LIMITS } from './rulesDefaults'
@@ -189,6 +189,34 @@ export function validateGameSession(
     }
   }
 
+  if (session.events != null) {
+    if (!Array.isArray(session.events)) {
+      errors.push('GameSession.events must be an array when present')
+    } else {
+      for (const evt of session.events) {
+        errors.push(...validateGameSessionEvent(evt))
+      }
+    }
+  }
+
   if (errors.length) return fail(errors)
   return ok(session)
+}
+
+const EVENT_TYPES = new Set([
+  'growth_summary',
+  'culture_generated',
+  'annexation',
+  'turn_completed',
+])
+
+export function validateGameSessionEvent(evt: GameSessionEvent): string[] {
+  const errors: string[] = []
+  if (!evt?.id) errors.push('event.id is required')
+  if (!EVENT_TYPES.has(evt?.type)) errors.push(`event.type is invalid: ${evt?.type}`)
+  if (typeof evt?.message !== 'string') errors.push('event.message is required')
+  if (!Number.isInteger(evt?.turn) || evt.turn < 1) errors.push('event.turn must be an integer ≥ 1')
+  if (!isFiniteNumber(evt?.year)) errors.push('event.year must be a finite number')
+  errors.push(...validateTimestamp(evt?.createdAt, 'event.createdAt'))
+  return errors
 }

@@ -12,7 +12,13 @@ export type { MapTemplate, MapCityTemplate } from './maps'
 export type { CivilizationTemplate, CivilizationInstance } from './civilizations'
 export type { GameRulesPreset, GameRulesSnapshot, GameRulesValues } from './rules'
 export { STANDARD_RULES_VALUES, RULES_VALUE_LIMITS } from './rulesDefaults'
-export type { GameSession, GameCity, GameSessionSourceMap } from './gameSession'
+export type {
+  GameSession,
+  GameCity,
+  GameSessionSourceMap,
+  GameSessionEvent,
+  GameSessionEventType,
+} from './gameSession'
 
 export {
   deepClone,

@@ -1,10 +1,48 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import { Badge, Button, CardLink, EmptyState, PageHeader, SectionHeader } from '../components/ui'
+import { getMostRecentGameSession } from '../gameSession'
+import { catalogErrorMessage } from '../catalog/persistence'
 
 export function MainMenuPage() {
-  const [continueNote, setContinueNote] = useState(false)
+  const navigate = useNavigate()
+  const [hasSessions, setHasSessions] = useState<boolean | null>(null)
+  const [continueError, setContinueError] = useState<string | null>(null)
+  const [continueBusy, setContinueBusy] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const recent = await getMostRecentGameSession()
+        if (!cancelled) setHasSessions(Boolean(recent))
+      } catch {
+        if (!cancelled) setHasSessions(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const continueGame = useCallback(async () => {
+    setContinueBusy(true)
+    setContinueError(null)
+    try {
+      const recent = await getMostRecentGameSession()
+      if (!recent) {
+        setHasSessions(false)
+        setContinueError('No saved games yet. Start a New Game first.')
+        return
+      }
+      navigate(`/games/${recent.id}`)
+    } catch (err) {
+      setContinueError(catalogErrorMessage(err, 'Could not open the latest game'))
+    } finally {
+      setContinueBusy(false)
+    }
+  }, [navigate])
 
   return (
     <AppShell title="Main Menu">
@@ -16,14 +54,30 @@ export function MainMenuPage() {
 
       <SectionHeader title="Primary Actions" />
       <div className="stack" style={{ marginBottom: 'var(--space-9)' }}>
-        <Button variant="secondary" size="lg" block onClick={() => setContinueNote(true)}>
-          Continue Game
+        <Button
+          variant="secondary"
+          size="lg"
+          block
+          disabled={hasSessions === false || continueBusy}
+          title={
+            hasSessions === false
+              ? 'No saved game sessions'
+              : 'Open the most recently updated game'
+          }
+          onClick={() => void continueGame()}
+        >
+          {continueBusy ? 'Opening…' : 'Continue Game'}
         </Button>
-        {continueNote && (
-          <EmptyState title="No saved sessions" milestone="F3 / F9 / F10">
-            Saved game sessions will appear here after local persistence and the New Game wizard exist. There is nothing to resume yet.
+        {hasSessions === false ? (
+          <EmptyState title="No saved sessions" milestone="F10">
+            Create a game from New Game, then Continue opens the most recent session.
           </EmptyState>
-        )}
+        ) : null}
+        {continueError ? (
+          <div className="catalog-status-error" role="alert">
+            {continueError}
+          </div>
+        ) : null}
         <Link to="/games/new" className="ui-button ui-button--primary ui-button--lg ui-button--block">
           New Game
         </Link>
@@ -41,10 +95,10 @@ export function MainMenuPage() {
           <div>
             <strong style={{ fontFamily: 'var(--font-sans)' }}>Open Current World Editor</strong>
             <p style={{ margin: 'var(--space-2) 0 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-size-sm)' }}>
-              Existing MVP editor until maps become catalog items (F4 / F5).
+              Scratch editor for map tooling. Catalog maps open from the Maps library.
             </p>
           </div>
-          <Badge tone="info">F1 Bridge</Badge>
+          <Badge tone="info">Dev</Badge>
         </div>
       </CardLink>
     </AppShell>

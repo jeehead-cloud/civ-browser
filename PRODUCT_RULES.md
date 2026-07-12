@@ -119,10 +119,11 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 
 ## 8. Turn / Time Rules
 
-- The owner chooses a **starting year** (can be negative, meaning BCE) and a **years-per-turn** step once, at the start of Play phase (`startGame(startYear, yearsPerTurn)`).
-- Each "End Turn" advances `currentYear` by `yearsPerTurn` and `turn` by 1, and runs growth → culture accumulation → annexation, in that order.
-- Starting the game switches `viewMode` to `'view'` and `gamePhase` to `'playing'` — editing tools become unavailable until (if ever) the owner adds a way to return to Edit phase. There is currently no "pause and go back to editing" flow; this may need to be revisited later.
-- There is no human-controlled civilization yet — the owner observes the simulation rather than issuing orders to a specific civilization. This is expected to change once Milestone M6 (units/actions) exists.
+- The owner chooses a **starting year** (can be negative, meaning BCE) and a **years-per-turn** step when creating a game (New Game wizard) or when starting Play in the legacy World Editor Sim.
+- Each "End Turn" / **Next Turn** advances `currentYear` by `yearsPerTurn` and `turn` by 1, and runs growth → culture accumulation → annexation, in that order.
+- Active Game (F10) runs this sequence on a `GameSession` copy via `applyTurn`, then autosaves. Optional structured `GameSession.events` record growth summary, culture generated, annexations, and turn completion.
+- Legacy World Editor Sim still uses Zustand `endTurn()` with the same formulas.
+- In the legacy Sim, starting the game switches `viewMode` to `'view'` and `gamePhase` to `'playing'`. Active Game has no edit tools.
 
 ---
 
@@ -130,17 +131,18 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 
 - **Edit mode**: clicking a hex paints according to the active World Builder tool (terrain, resource, hills, vegetation, river, or city). This is the only mode where the World Builder toolbar controls are shown.
 - **View mode**: clicking a hex opens an info popup (`TileInfoPanel`) showing terrain/vegetation/hills/resource/river state, and — if the tile has a city — the city's name, population, owning civilization, culture output (if capital), and total growth rate. No painting happens in View mode.
-- Starting a game (pressing "Играть") force-switches to View mode. The owner can still manually flip back to Edit mode from the toolbar even during Play phase — this is intentional (e.g. to fix a map mistake mid-game), but be aware that doing so does not pause the turn counter or anything else; it only changes what a click does.
+- Active Game (F10) is always view-only on the session map: clicks select tiles/cities for a compact strip, never paint.
+- Starting a legacy Sim game (pressing "Играть") force-switches to View mode. The owner can still manually flip back to Edit mode from the toolbar even during Play phase — this is intentional for the Sim only.
 
 ---
 
-## 10. Event Log (Planned, Not Yet Implemented)
+## 10. Event Log
 
-Milestone M5 calls for an in-game event log describing what happened each turn in human-readable terms (e.g. "Рим напал на Египет" / "Rome annexed Cairo"). As of this writing:
+Active Game (F10) persists optional structured `GameSession.events` with types such as `growth_summary`, `culture_generated`, `annexation`, and `turn_completed` (id, turn, year, message, data, related ids).
 
-- no event log data structure exists in `GameState`;
-- `endTurn()` performs annexation silently, with no record kept of what happened;
-- when this is implemented, prefer appending structured event records (turn number, year, event type, involved civilizations/cities) rather than pre-formatted strings, so the log can be filtered/localized later, and update this section once the shape is decided.
+- Prefer structured records over pre-formatted-only strings so the log can be filtered/localized later.
+- The legacy World Editor Sim `endTurn()` still does not write `GameSession.events`.
+- Richer narrative / localization remains open for M5/F11 polish.
 
 ---
 
@@ -152,7 +154,7 @@ The following are intentionally **not** implemented yet, and no feature should a
 - Units, movement, worker/settler actions, production queues (Milestone M6).
 - Combat of any kind (Milestone M7).
 - AI decision-making beyond the simple nearest-city annexation rule, and diplomacy (Milestone M8).
-- Multiplayer or human-vs-human play. F9 creates exactly one Human civilization in a GameSession; Active Game control (F10) is not wired yet. Legacy World Editor Sim still treats civilizations as AI-only.
+- Multiplayer or human-vs-human play. F9/F10 use exactly one Human civilization in a GameSession. Legacy World Editor Sim still treats civilizations as AI-only.
 - Growth bonuses derived from terrain, resources, or buildings (only a manually-set flat per-city bonus exists today).
 - Any server-side validation or persistence — see `DEPLOYMENT.md`.
 

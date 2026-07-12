@@ -55,7 +55,7 @@ Settings & Balance
 
 ### Continue Game
 
-Opens the list of existing game sessions and allows the user to resume one.
+F10: opens the most recently updated game session (no full catalog UI yet). A saved-games list remains a later enhancement.
 
 ### New Game
 
@@ -549,13 +549,15 @@ The active game follows the Civilization V principle:
 - the right column contains secondary information;
 - the top panel contains compact game status.
 
+F10 implements this shell for `/games/:gameId` with an isolated session runtime, Next Turn, autosave, and minimal tile/city selection. Full contextual popups remain F11.
+
 Main structure:
 
 ```text
 Top status bar
 Large central map
 Right information column
-Compact contextual popups
+Compact selection strip (F10) / contextual popups (F11)
 ```
 
 ---
@@ -986,7 +988,7 @@ Before adding units, combat, diplomacy, great people, espionage, or other large 
 5. rules presets;
 6. New Game wizard (done — F9);
 7. separation between map templates and game sessions (done — F2/F9);
-8. separate editor and active-game screens (editor done; Active Game shell is F10);
+8. separate editor and active-game screens (done — F5/F6 editor, F10 Active Game);
 9. local persistence (done — F3);
 10. staged map-generation tools (done — F7);
 11. display layers (done — F6);

@@ -27,6 +27,25 @@ export interface GameSessionSourceMap {
   templateName: string
 }
 
+/** Structured gameplay event (optional; older sessions may omit). */
+export type GameSessionEventType =
+  | 'growth_summary'
+  | 'culture_generated'
+  | 'annexation'
+  | 'turn_completed'
+
+export interface GameSessionEvent {
+  id: string
+  turn: number
+  year: number
+  type: GameSessionEventType
+  message: string
+  data: Record<string, unknown>
+  relatedCityIds?: string[]
+  relatedCivilizationIds?: string[]
+  createdAt: string
+}
+
 /**
  * Independent active / resumable game.
  * Map tiles, cities, civ instances, and rules are deep copies — not live template refs.
@@ -47,6 +66,8 @@ export interface GameSession {
   yearsPerTurn: number
   /** Product plan allows a max-turn limit; optional until New Game / F9 wires it. */
   maximumTurns?: number
+  /** Optional structured event log (F10+). Absent on older sessions. */
+  events?: GameSessionEvent[]
   createdAt: string
   updatedAt: string
 }

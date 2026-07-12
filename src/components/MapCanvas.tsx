@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '../game/store'
 import { axialToPixel, hexCorners, pixelToAxial, tileKey, HEX_SIZE } from '../game/hexGrid'
+import type { AxialCoord, Tile } from '../game/types'
 import { TerrainType } from '../game/types'
+import { DEFAULT_DISPLAY_LAYERS, type EditorDisplayLayers } from '../editor/displayLayers'
 
 const TERRAIN_COLORS: Record<TerrainType, string> = {
   ocean: '#1e3a8a',
@@ -31,13 +33,35 @@ const MAX_VIEWPORT_HEIGHT_OFFSET = 100
 const MIN_ZOOM = 0.1
 const MAX_ZOOM = 3
 
-export function MapCanvas() {
+/** Active-game / read-only map data — does not use World Editor store. */
+export interface MapCanvasViewModel {
+  tiles: Record<string, Tile>
+  cities: Array<{
+    id: string
+    name: string
+    population: number
+    civId: string | null
+  }>
+  civilizations: Array<{ id: string; flagEmoji: string }>
+  displayLayers?: EditorDisplayLayers
+  selectedTileKey?: string | null
+  onSelectTile?: (tileKey: string) => void
+  focusRequest?: { coord: AxialCoord; nonce: number } | null
+}
+
+interface MapCanvasProps {
+  /** When set, renders this session view (no editor painting). */
+  view?: MapCanvasViewModel
+  className?: string
+}
+
+export function MapCanvas({ view, className }: MapCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const game = useGameStore((s) => s.game)
+  const isActiveView = Boolean(view)
+
+  const storeGame = useGameStore((s) => s.game)
   const builder = useGameStore((s) => s.builder)
-  const cities = useGameStore((s) => s.game.cities)
-  const civilizations = useGameStore((s) => s.game.civilizations)
   const paintAt = useGameStore((s) => s.paintAt)
   const viewMode = useGameStore((s) => s.viewMode)
   const setViewingTile = useGameStore((s) => s.setViewingTile)
@@ -48,6 +72,12 @@ export function MapCanvas() {
   const editorDisplay = useGameStore((s) => s.editorDisplay)
   const cameraFocusRequest = useGameStore((s) => s.cameraFocusRequest)
   const setSelectedEditorCityId = useGameStore((s) => s.setSelectedEditorCityId)
+
+  const tiles = view?.tiles ?? storeGame.tiles
+  const cities = view?.cities ?? storeGame.cities
+  const civilizations = view?.civilizations ?? storeGame.civilizations
+  const layers = view?.displayLayers ?? (isActiveView ? DEFAULT_DISPLAY_LAYERS : editorDisplay)
+  const focusRequest = view?.focusRequest ?? (isActiveView ? null : cameraFocusRequest)
 
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 0.5 })
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({
@@ -108,10 +138,10 @@ export function MapCanvas() {
   }, [])
 
   useEffect(() => {
-    if (!cameraFocusRequest) return
-    const world = axialToPixel(cameraFocusRequest.coord)
+    if (!focusRequest) return
+    const world = axialToPixel(focusRequest.coord)
     setCamera((c) => ({ ...c, x: world.x, y: world.y }))
-  }, [cameraFocusRequest])
+  }, [focusRequest])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -124,10 +154,10 @@ export function MapCanvas() {
     ctx.fillRect(0, 0, canvasSize.width, canvasSize.height)
 
     const margin = HEX_SIZE * 2 * camera.zoom
-    const layers = editorDisplay
+    const selectedKey = view?.selectedTileKey ?? null
 
-    for (const key in game.tiles) {
-      const tile = game.tiles[key]
+    for (const key in tiles) {
+      const tile = tiles[key]
       const world = axialToPixel(tile.coord)
       const screen = worldToScreen(world.x, world.y)
 
@@ -151,7 +181,11 @@ export function MapCanvas() {
       ctx.fillStyle = layers.terrain ? TERRAIN_COLORS[tile.terrain] : HIDDEN_TERRAIN_FILL
       ctx.fill()
 
-      if (layers.grid && camera.zoom > 0.3) {
+      if (selectedKey === key) {
+        ctx.strokeStyle = '#fbbf24'
+        ctx.lineWidth = Math.max(2, 2.5 * camera.zoom)
+        ctx.stroke()
+      } else if (layers.grid && camera.zoom > 0.3) {
         ctx.strokeStyle = 'rgba(0,0,0,0.25)'
         ctx.lineWidth = 1
         ctx.stroke()
@@ -252,7 +286,7 @@ export function MapCanvas() {
         }
       }
     }
-  }, [game.tiles, game.cities, game.civilizations, camera, canvasSize, editorDisplay])
+  }, [tiles, cities, civilizations, camera, canvasSize, layers, view?.selectedTileKey])
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     draggingRef.current = {
@@ -286,8 +320,13 @@ export function MapCanvas() {
     const world = screenToWorld(sx, sy)
     const coord = pixelToAxial(world.x, world.y)
     const key = tileKey(coord)
-    const tile = game.tiles[key]
+    const tile = tiles[key]
     if (!tile) return
+
+    if (isActiveView) {
+      view?.onSelectTile?.(key)
+      return
+    }
 
     if (viewMode === 'view') {
       setViewingTile(key)
@@ -331,7 +370,7 @@ export function MapCanvas() {
   }
 
   return (
-    <div className="world-editor-canvas-wrap">
+    <div className={['world-editor-canvas-wrap', className].filter(Boolean).join(' ')}>
       <div ref={containerRef} className="world-editor-canvas-host">
         <canvas
           ref={canvasRef}

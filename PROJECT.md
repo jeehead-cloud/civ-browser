@@ -107,7 +107,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F7 | Independent Map Layers | Done |
 | F8 | Rules Presets (Settings & Balance) | Done |
 | F9 | New Game Wizard | Done |
-| F10–F12 | Active game shell, popups, debug editing | Queued |
+| F10 | Active Game Shell | Done |
+| F11–F12 | Context popups, debug editing | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

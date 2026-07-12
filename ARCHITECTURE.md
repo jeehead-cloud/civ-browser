@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard and saves them through `GameSessionRepository`. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed). Full Active Game UI remains F10.
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard. **F10** loads a session into a dedicated active-game runtime (`src/gameSession/`), runs the turn engine, autosaves, and renders the Active Game shell. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -47,7 +47,7 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | `/library/civilizations` | Civilizations catalog | Working (F4 repository-backed) |
 | `/settings` | Settings & Balance | Working (F8 rules presets) |
 | `/games/new` | New Game | Working four-step wizard (F9) |
-| `/games/:gameId` | Active Game | Persisted session summary placeholder (F9); full shell is F10 |
+| `/games/:gameId` | Active Game | Working shell (F10); F11 expands popups |
 | `*` | Not found | Working |
 
 Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it uses a full-viewport F6 shell: top command bar, dominant map, right editing panel.
@@ -126,7 +126,8 @@ civ-browser/
     ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
     ├── rules/                     — F8 parameter defs, preset service/hook, verify:rules-presets
     ├── newGame/                   — F9 setup validation, createGameSession, persistence service, wizard hook, verify:new-game
-    ├── game/                      — legacy runtime types + Zustand store
+    ├── gameSession/               — F10 active runtime store, turn engine, session load/save, selectors, verify:active-game
+    ├── game/                      — legacy runtime types + Zustand store (World Editor / Sim)
     │   └── mapLayers/             — F7 independent layer operations + verify:map-layers
     └── components/
         ├── AppShell.tsx
@@ -134,7 +135,7 @@ civ-browser/
         ├── editor/                — EditorCommandBar, EditorRightPanel, Tiles/Cities/Display sections
         ├── rules/                 — ParameterField
         ├── newGame/               — WizardSteps, SelectionCard, ValidationSummary
-        ├── MapCanvas.tsx
+        ├── MapCanvas.tsx          — editor paint + optional active `view` prop (read-only)
         └── … (CityModal, TileInfoPanel, temporary Simulation panels)
 ```
 
@@ -281,8 +282,25 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Persistence | `createAndSaveGameSession` re-reads sources, validates, creates once, saves via `GameSessionRepository`, verifies with `get` |
 | Immutability | Source `MapTemplate`, `CivilizationTemplate`, and `GameRulesPreset` are never mutated by creation |
 | Leave guards | `beforeunload` + router blocker after meaningful progress; cleared after successful create |
-| Active placeholder | `/games/:gameId` loads session by id and shows a concise summary (F10 gameplay deferred) |
+| Navigation | After create, navigate to `/games/:gameId` (Active Game shell — F10) |
 | Verification | `npm run verify:new-game` |
+
+## 3.9. Active Game Shell (F10)
+
+| Item | Behavior |
+|---|---|
+| Route | `/games/:gameId` — load session, isolated runtime, map + top bar + right column |
+| Runtime | Dedicated Zustand store `useActiveGameStore` in `src/gameSession/` — **not** the World Editor store |
+| Load | `loadGameSession` → validate → deep-copy hydrate; loading / not-found / error states |
+| Turn engine | Pure `applyTurn`: growth → capital culture → annexation → year+ → turn+ (PRODUCT_RULES formulas unchanged) |
+| Events | Structured `GameSessionEvent[]` (optional on session); growth summary, culture, annexation, turn completed |
+| Save | Explicit **Save Game**; **autosave after each successful Next Turn**; failed save keeps runtime; Retry Save |
+| Map | `MapCanvas` `view` prop — pan/zoom/select only; no editor tools; selection highlight |
+| Top bar | Human civ flag/name/capital/pop/cities/culture; year/turn; save status |
+| Right column | Tabs Overview (events + civ list + Next Turn), Cities (read-only), World (summary) |
+| Continue Game | Main Menu opens most recently updated `GameSession` |
+| Isolation | Source map templates and rules presets are never mutated by play |
+| Verification | `npm run verify:active-game` |
 
 ---
 

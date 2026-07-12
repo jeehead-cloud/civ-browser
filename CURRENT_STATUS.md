@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F9 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets at `/settings` (F8), and the New Game wizard that creates independent `GameSession` records (F9). Scratch editor remains at `/library/maps/current/edit`. `/games/:gameId` shows a persisted session summary; full Active Game UI is F10.
+**F1–F10 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets (F8), New Game wizard (F9), and Active Game shell with isolated session runtime + turn simulation (F10). Scratch editor remains at `/library/maps/current/edit`.
 
-There is still no Active Game turn loop on `GameSession` and no units/combat/AI — those remain later milestones (F10+, M6–M8). Legacy World Editor Sim can still run a local play loop.
+F11 contextual popups/panels and F12 debug editing remain queued. Legacy World Editor Sim can still run a local play loop separately from Active Game.
 
 ---
 
@@ -141,12 +141,30 @@ Implemented:
 
 Known limitations:
 - Wizard draft is not persisted across refresh.
-- Teams, AI difficulty, multiple Humans, Continue Game list deferred.
-- Session is not loaded into Zustand; no turn simulation on GameSession yet (F10).
+- Teams, AI difficulty, multiple Humans, full Continue Game catalog deferred.
+- Session play happens in F10 Active Game (not the wizard).
 
-### F10–F12 — Not started
+### F10 — Active Game Shell (Done)
 
-Next: **F10 Active Game Shell**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- `/games/:gameId` loads GameSession into dedicated `useActiveGameStore` (isolated from World Editor).
+- Layout: top info bar + dominant map + right column (Overview / Cities / World) + Next Turn.
+- Pure `applyTurn` preserves growth → culture → annexation → year/turn formulas.
+- Autosave after Next Turn + explicit Save Game; save status + Retry Save.
+- Optional structured `GameSession.events` (growth summary, culture, annexation, turn completed).
+- MapCanvas `view` mode: pan/zoom/select only; compact tile/city selection strip.
+- Main Menu Continue Game opens most recently updated session.
+- Verification: `npm run verify:active-game`.
+
+Known limitations:
+- Cities/World tabs are summaries; full F11 popups/actions deferred.
+- No units/combat/diplomacy/fog/victory.
+- No full saved-games catalog (Continue = latest only).
+- Food/production yields not shown (no yield model yet).
+
+### F11–F12 — Not started
+
+Next: **F11 Context Popups and Information Panels**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -236,16 +254,17 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 - Earth-like generation is regenerable but stylized and seed-dependent; forced bridges/straits improve Eurasia–Africa connectivity but do not guarantee Civ5-level geography.
 - Focused verification scripts exist for domain/persistence/catalogs/editor/layers/rules/new-game (`verify:*`); there is still no large end-to-end UI test framework.
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
-- Continue Game list and full Active Game shell remain F10+; `/games/:gameId` is a persisted summary only.
+- Continue Game opens the most recent session only (no full catalog/delete/rename yet).
 - New Game wizard does not autosave drafts; refresh resets setup.
+- Active Game Cities/World tabs and selection strip are minimal; F11 expands contextual UI.
 - World Editor catalog path is `/library/maps/:mapId/edit` with Save; scratch path `/library/maps/current/edit` has no catalog binding.
 
 ---
 
 ## 5. Nearest Next Steps
 
-1. **F10 — Active Game Shell** (load GameSession, map + turn controls, session save strategy).
-2. M5 event log remains open on the legacy gameplay side; Continue Game list after sessions are playable.
+1. **F11 — Context Popups and Information Panels** (tile/city detail, richer Overview).
+2. M5 event log on the legacy Sim path remains open; F12 debug editing after F11.
 
 ---
 
@@ -276,6 +295,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F10 Active Game Shell
+
+- Classification: Significant
+- Summary: Replaced `/games/:gameId` summary with Active Game shell: isolated `useActiveGameStore`, pure turn engine (unchanged formulas), autosave + Save Game, map view-only mode, Overview events/civ list, Continue Game → latest session; `npm run verify:active-game`.
+- Files: `src/gameSession/*`, `src/pages/ActiveGamePage.tsx`, `src/pages/MainMenuPage.tsx`, `src/components/MapCanvas.tsx`, `src/domain/gameSession.ts`, `src/domain/validators.ts`, `src/design-system/components.css`, `package.json`, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS (LF warnings only); all verify:* including `verify:active-game` PASS; interactive browser Active Game checklist NOT exhaustively run
 
 ### 2026-07-12 — F9 New Game Wizard
 
@@ -374,10 +400,17 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
 
+### 2026-07-12 — F10 Active Game Shell
+
+- Area: Product / Architecture
+- Change: Active play uses a dedicated session runtime separate from the World Editor store. Turns run through a pure engine with unchanged growth/culture/annexation rules, autosave to `GameSessionRepository`, and optional structured events on the session. MapCanvas supports a read-only `view` mode for the shell.
+- Reason: Separates catalog editing from resumable gameplay while preserving MVP simulation.
+- Source of truth: `ARCHITECTURE.md` §3.9, `src/gameSession/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F10
+
 ### 2026-07-12 — F9 New Game Wizard
 
 - Area: Product / Architecture
-- Change: New Game is a working four-step wizard that builds an independent `GameSession` from catalog map/civ/rules sources, assigns unique capitals (capitals-only ownership at start), snapshots rules, and persists through `GameSessionRepository`. `/games/:gameId` loads a summary only; F10 owns gameplay UI. F9 enforces exactly one Human civilization for single-player.
+- Change: New Game is a working four-step wizard that builds an independent `GameSession` from catalog map/civ/rules sources, assigns unique capitals (capitals-only ownership at start), snapshots rules, and persists through `GameSessionRepository`. Initially navigated to a summary route; F10 replaced that with the Active Game shell. F9 enforces exactly one Human civilization for single-player.
 - Reason: Separates session creation from catalog editing and from the Active Game shell.
 - Source of truth: `ARCHITECTURE.md` §3.8, `src/newGame/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F9
 

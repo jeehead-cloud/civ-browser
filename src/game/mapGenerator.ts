@@ -281,7 +281,7 @@ export function generateProceduralMap(options: GenOptions, seed = Date.now()): R
       const candidate = coords[Math.floor(rand() * coords.length)]
       if (isFarFromLand(candidate, isLand, 4)) {
         const size = 1 + Math.floor(rand() * 3)
-        const blob = growBlob(candidate, size, () => true, rand, 0.6)
+        const blob = growBlob(candidate, size, (key) => coordsByKey.has(key), rand, 0.6)
         for (const key of blob) {
           if (!isLand.has(key)) {
             isLand.add(key)
@@ -299,7 +299,7 @@ export function generateProceduralMap(options: GenOptions, seed = Date.now()): R
       const candidate = coords[Math.floor(rand() * coords.length)]
       if (isFarFromLand(candidate, isLand, 6)) {
         const size = 15 + Math.floor(rand() * 26) // 15-40 tiles
-        const blob = growBlob(candidate, size, () => true, rand, 0.72)
+        const blob = growBlob(candidate, size, (key) => coordsByKey.has(key), rand, 0.72)
         for (const key of blob) {
           if (!isLand.has(key)) {
             isLand.add(key)

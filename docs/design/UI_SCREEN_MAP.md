@@ -11,8 +11,8 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library/maps/:mapId/edit` | World Editor (selected map) | `ui_kits/scenario-editor` (reference) | F5+F6 | **Working** F6 layout + F5 load/save |
 | `/library/maps/current/edit` | Scratch World Editor | scenario-editor kit | Scratch + F6 layout | **Working** same shell; not catalog-backed |
 | `/settings` | Settings & Balance | Panel + category nav | F8 | **Working** rules preset editor |
-| `/games/new` | New Game | Wizard shell (future) | F9 | **Styled placeholder** |
-| `/games/:gameId` | Active Game | `ui_kits/game-session` | F10 / F11 | **Styled placeholder** |
+| `/games/new` | New Game | Wizard shell | F9 | **Working** |
+| `/games/:gameId` | Active Game | `ui_kits/game-session` | F9 summary / F10 shell | **Persisted summary placeholder** |
 | `*` | Not Found | App shell empty state | F1 | **Styled** |
 
 ---
@@ -56,15 +56,19 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 - F8: repository-backed rules presets (Standard protected); category nav; parameter cards; search/changed-only; draft Save/Revert/reset; dirty leave guards.
 - Components: PageHeader, FormField, Input, Button, Badge, Dialog, ConfirmDialog, ParameterField, EmptyState.
-- Deferred: F9 apply-to-new-game; future category parameters.
+- Deferred: future category parameters; preset import/export.
 
 ### New Game `/games/new`
 
-- Placeholder until wizard (F9). No session creation.
+- F9: four-step wizard (Map → Civilizations → Game Settings → Review & Start).
+- Creates independent GameSession via dedicated service; saves through GameSessionRepository; navigates to `/games/:gameId`.
+- Components: PageHeader, WizardSteps, SelectionCard, ValidationSummary, Panel, FormField, Input, Button, Badge, EmptyState, ConfirmDialog, SegmentedControl.
+- Deferred: wizard draft persistence; teams; AI difficulty; multiple Humans; Continue Game.
 
 ### Active Game `/games/:gameId`
 
-- Shows `gameId` as route context only. Kit reference: game-session HUD (F10).
+- F9: loads persisted GameSession by id; shows name/map/turn/year/civilizations summary; states loading/error/not-found.
+- Full gameplay shell / turn controls: F10. Kit reference: game-session HUD.
 
 ### Not Found `*`
 
@@ -74,4 +78,4 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ## Explicitly deferred from D1 / remaining after F6
 
-Units, combat, diplomacy, tech trees, F7 layer generation, Lucide icon wiring, Toast/Tooltip primitives, final Active Game HUD.
+Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, final Active Game HUD (F10).

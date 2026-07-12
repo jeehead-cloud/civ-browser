@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F8 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), and repository-backed rules presets at `/settings` (F8). Scratch editor remains at `/library/maps/current/edit`. New Game / Active Game are still placeholders (F9+).
+**F1–F9 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets at `/settings` (F8), and the New Game wizard that creates independent `GameSession` records (F9). Scratch editor remains at `/library/maps/current/edit`. `/games/:gameId` shows a persisted session summary; full Active Game UI is F10.
 
-There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
+There is still no Active Game turn loop on `GameSession` and no units/combat/AI — those remain later milestones (F10+, M6–M8). Legacy World Editor Sim can still run a local play loop.
 
 ---
 
@@ -28,7 +28,7 @@ There is no human-controlled civilization and no units/combat/AI yet — those r
 ### F1 — Application Shell and Routing (Done)
 
 Implemented:
-- React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations catalogs, Settings & Balance placeholder, New Game placeholder, Active Game placeholder (`/games/:gameId` shows route id only), and not-found.
+- React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations catalogs, Settings & Balance, New Game wizard, Active Game route, and not-found.
 - Existing editor UI at `/library/maps/:mapId/edit` (catalog) and `/library/maps/current/edit` (scratch).
 - `AppShell` for non-editor screens; editor uses full-viewport F6 shell.
 
@@ -124,11 +124,29 @@ Implemented:
 - Verification: `npm run verify:rules-presets`.
 
 Deferred:
-- F9 selecting a preset into a new GameSession; future category parameters; preset import/export.
+- Future category parameters; preset import/export.
 
-### F9–F12 — Not started
+### F9 — New Game Wizard (Done)
 
-Next: **F9 New Game Wizard**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- `/games/new` four-step wizard: Map → Civilizations → Game Settings → Review & Start.
+- Repository-backed sources (maps, civilizations, rules presets); search/select; loading/empty/error/retry.
+- Exactly one Human civilization; unique capitals from map cities; zero-city maps blocked from progressing.
+- Rules preset + starting year / years per turn / optional maximum turns; read-only preset summary.
+- Pure `createGameSessionFromSetup` + `createAndSaveGameSession` (re-read sources, validate, save once, double-submit guard).
+- Independent snapshots: tiles/cities/civ instances/rules; capitals owned only; sources unchanged.
+- Dirty leave protection; navigate to `/games/:gameId` after create.
+- Minimal Active Game page loads persisted session summary (not F10 gameplay).
+- Verification: `npm run verify:new-game`.
+
+Known limitations:
+- Wizard draft is not persisted across refresh.
+- Teams, AI difficulty, multiple Humans, Continue Game list deferred.
+- Session is not loaded into Zustand; no turn simulation on GameSession yet (F10).
+
+### F10–F12 — Not started
+
+Next: **F10 Active Game Shell**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -216,17 +234,18 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 - Procedural map generation is accepted as imperfect (see M2 above) — don't assume it will produce a recognizable or always-connected world.
 - Earth-like generation is regenerable but stylized and seed-dependent; forced bridges/straits improve Eurasia–Africa connectivity but do not guarantee Civ5-level geography.
-- Focused verification scripts exist for domain/persistence/catalogs (`verify:domain`, `verify:persistence`, `verify:catalogs`); there is still no large end-to-end UI test framework.
+- Focused verification scripts exist for domain/persistence/catalogs/editor/layers/rules/new-game (`verify:*`); there is still no large end-to-end UI test framework.
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
-- Settings / New Game / Active Game / Continue Game remain placeholders until F8–F10.
+- Continue Game list and full Active Game shell remain F10+; `/games/:gameId` is a persisted summary only.
+- New Game wizard does not autosave drafts; refresh resets setup.
 - World Editor catalog path is `/library/maps/:mapId/edit` with Save; scratch path `/library/maps/current/edit` has no catalog binding.
 
 ---
 
 ## 5. Nearest Next Steps
 
-1. **F6 — World Editor Restructure** (Atlas visual redesign of tools/panels).
-2. Then F8 rules presets; F9 New Game; M5 event log remains open on the gameplay side.
+1. **F10 — Active Game Shell** (load GameSession, map + turn controls, session save strategy).
+2. M5 event log remains open on the legacy gameplay side; Continue Game list after sessions are playable.
 
 ---
 
@@ -257,6 +276,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F9 New Game Wizard
+
+- Classification: Significant
+- Summary: Replaced `/games/new` placeholder with a four-step repository-backed wizard that creates independent `GameSession` snapshots (map/civs/rules), saves via `GameSessionRepository`, and navigates to a minimal `/games/:gameId` summary. Exactly one Human; unique capitals; sources immutable; `npm run verify:new-game`.
+- Files: `src/newGame/*`, `src/components/newGame/*`, `src/pages/{NewGame,ActiveGame}Page.tsx`, `src/design-system/components.css`, `package.json`, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS (LF warnings only); all verify:* including `verify:new-game` PASS; interactive browser New Game checklist NOT exhaustively run
 
 ### 2026-07-12 — F8 Rules Presets
 
@@ -347,6 +373,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F9 New Game Wizard
+
+- Area: Product / Architecture
+- Change: New Game is a working four-step wizard that builds an independent `GameSession` from catalog map/civ/rules sources, assigns unique capitals (capitals-only ownership at start), snapshots rules, and persists through `GameSessionRepository`. `/games/:gameId` loads a summary only; F10 owns gameplay UI. F9 enforces exactly one Human civilization for single-player.
+- Reason: Separates session creation from catalog editing and from the Active Game shell.
+- Source of truth: `ARCHITECTURE.md` §3.8, `src/newGame/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F9
 
 ### 2026-07-12 — F8 Rules Presets
 

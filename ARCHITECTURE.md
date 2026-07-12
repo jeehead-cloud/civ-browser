@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard and saves them through `GameSessionRepository`. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed). Full Active Game UI remains F10.
 
 ---
 
@@ -45,9 +45,9 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | `/library/maps/:mapId/edit` | World Editor for a catalog map | Working (F5 load/save) |
 | `/library/maps/current/edit` | Scratch World Editor (MVP) | Working — not catalog-backed; development fallback |
 | `/library/civilizations` | Civilizations catalog | Working (F4 repository-backed) |
-| `/settings` | Settings & Balance | Placeholder |
-| `/games/new` | New Game | Placeholder |
-| `/games/:gameId` | Active Game | Placeholder (shows `gameId` as route context only) |
+| `/settings` | Settings & Balance | Working (F8 rules presets) |
+| `/games/new` | New Game | Working four-step wizard (F9) |
+| `/games/:gameId` | Active Game | Persisted session summary placeholder (F9); full shell is F10 |
 | `*` | Not found | Working |
 
 Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it uses a full-viewport F6 shell: top command bar, dominant map, right editing panel.
@@ -125,6 +125,7 @@ civ-browser/
     │   └── editorPersistenceVerification.ts / verifyEditorPersistence.ts
     ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
     ├── rules/                     — F8 parameter defs, preset service/hook, verify:rules-presets
+    ├── newGame/                   — F9 setup validation, createGameSession, persistence service, wizard hook, verify:new-game
     ├── game/                      — legacy runtime types + Zustand store
     │   └── mapLayers/             — F7 independent layer operations + verify:map-layers
     └── components/
@@ -132,6 +133,7 @@ civ-browser/
         ├── ui/                    — Button, Accordion, SegmentedControl, Dialog, …
         ├── editor/                — EditorCommandBar, EditorRightPanel, Tiles/Cities/Display sections
         ├── rules/                 — ParameterField
+        ├── newGame/               — WizardSteps, SelectionCard, ValidationSummary
         ├── MapCanvas.tsx
         └── … (CityModal, TileInfoPanel, temporary Simulation panels)
 ```
@@ -261,8 +263,26 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Draft model | Local draft until Save; Revert Unsaved; Reset field/category/all (dirty until Save) |
 | Dirty protection | `beforeunload` + `useBlocker`; confirm on preset switch |
 | Legacy boundary | World Editor Sim `SettingsPanel` edits Zustand `GameSettings` only — not the preset catalog |
-| F9 boundary | Presets are reusable templates; F9 will snapshot into `GameRulesSnapshot` without live linking |
+| F9 boundary | Presets are reusable templates; New Game copies into `GameRulesSnapshot` with no live link |
 | Verification | `npm run verify:rules-presets` |
+
+## 3.8. New Game Wizard (F9)
+
+| Item | Behavior |
+|---|---|
+| Route | `/games/new` — four steps: Map → Civilizations → Game Settings → Review & Start |
+| Wizard state | Single in-memory state via `useNewGameWizard` + pure `wizardState` helpers; refresh resets (no draft repository) |
+| Sources | Maps / civilizations / rules presets loaded through catalog persistence (repositories); React does not touch Dexie |
+| Map step | Select one map; zero-city maps may be inspected but cannot proceed; Open in Editor warns if dirty |
+| Civilizations | Add/remove catalog templates; exactly one Human (others AI); per-game color override; unique capital from map cities |
+| Settings | Choose rules preset + starting year / years per turn / optional maximum turns; preset values shown read-only |
+| Session factory | Pure `createGameSessionFromSetup` — deep-copies tiles, converts `MapCityTemplate` → `GameCity`, snapshots civs + rules |
+| Ownership | Only assigned capitals receive `civId` + `isCapital`; other cities stay unclaimed; no inferred territory |
+| Persistence | `createAndSaveGameSession` re-reads sources, validates, creates once, saves via `GameSessionRepository`, verifies with `get` |
+| Immutability | Source `MapTemplate`, `CivilizationTemplate`, and `GameRulesPreset` are never mutated by creation |
+| Leave guards | `beforeunload` + router blocker after meaningful progress; cleared after successful create |
+| Active placeholder | `/games/:gameId` loads session by id and shows a concise summary (F10 gameplay deferred) |
+| Verification | `npm run verify:new-game` |
 
 ---
 

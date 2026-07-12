@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F8 done; F9+ queued)
+**Status:** Active (F1–F9 done; F10+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -177,7 +177,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F6 | World Editor Restructure | New Civ V-like editor structure | **Done** |
 | F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | **Done** |
 | F8 | Rules Presets | Scalable settings and balance system | **Done** |
-| F9 | New Game Wizard | Create game sessions from templates | Queued |
+| F9 | New Game Wizard | Create game sessions from templates | **Done** |
 | F10 | Active Game Shell | Separate gameplay UI | Queued |
 | F11 | Context Popups and Panels | Tile, city, events, civilization summaries | Queued |
 | F12 | Debug Editing Boundary | Safe live editing of current session only | Queued |
@@ -788,6 +788,8 @@ Preset actions:
 
 # 13. F9 — New Game Wizard
 
+**Status: Implemented** (four-step wizard; independent GameSession creation + persistence; Active Game summary placeholder).
+
 ## Goal
 
 Create a game session from reusable content.
@@ -797,47 +799,53 @@ Create a game session from reusable content.
 ### Step 1 — Map
 
 - select saved map;
-- preview;
-- dimensions;
-- number of cities;
-- readiness status;
-- open in editor.
+- dimensions / city count / readiness;
+- open in editor (with leave confirm when wizard is dirty).
 
 ### Step 2 — Civilizations
 
 - select civilization templates;
-- choose player or AI;
-- assign color;
+- choose Human or AI (exactly one Human for F9 single-player);
+- assign color (per-game override);
 - assign capital from cities already present on the map.
 
 Validation:
 
 - at least one civilization;
-- at least one player civilization;
+- exactly one Human civilization;
 - every civilization has exactly one capital;
 - capitals are unique;
-- capital exists on the selected map.
+- capital exists on the selected map;
+- maps with zero cities cannot proceed.
 
 ### Step 3 — Game Settings
 
 - select rules preset;
 - starting year;
 - years per turn;
-- maximum turns.
+- maximum turns (optional).
 
 ### Step 4 — Review & Start
 
 - summary;
 - validation;
-- Create Game.
+- Create Game → save session → `/games/:gameId`.
 
 ## Deliverables
 
-- wizard state;
-- validation;
-- session creation service;
-- deep-copy or snapshot logic;
-- save to game session repository.
+- wizard state (`useNewGameWizard` + pure helpers);
+- setup validation;
+- `createGameSessionFromSetup` / `createAndSaveGameSession`;
+- deep-copy / snapshot logic;
+- save to game session repository;
+- minimal persisted-session summary page;
+- `npm run verify:new-game`.
+
+## Justified deviations
+
+- PRODUCT_STRUCTURE wording “at least one player civilization” is narrowed to **exactly one Human** for F9 single-player (documented in PRODUCT_RULES / CURRENT_STATUS).
+- `/games/:gameId` is a read-only summary until F10 (not the full Active Game shell).
+- Wizard drafts are not persisted across refresh.
 
 ## Acceptance Criteria
 
@@ -846,7 +854,8 @@ Validation:
 - source preset remains unchanged;
 - created game has independent copied state;
 - invalid capital assignments are blocked;
-- `npm run build` passes.
+- `npm run build` passes;
+- `npm run verify:new-game` passes.
 
 ---
 

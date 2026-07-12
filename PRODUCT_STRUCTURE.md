@@ -469,7 +469,7 @@ Rules:
 - every selected civilization has exactly one capital;
 - one city cannot be the capital of two civilizations;
 - the capital must already exist on the selected map;
-- at least one civilization must be controlled by the player.
+- F9 enforces exactly one Human civilization (single-player); additional Humans remain deferred.
 
 ### 14.3. Step 3 — Game Settings
 
@@ -506,9 +506,9 @@ Summary includes:
 
 Before starting, validate:
 
-- map selected;
+- map selected (with at least one city);
 - at least one civilization selected;
-- one player civilization exists;
+- exactly one Human civilization;
 - every civilization has a valid capital;
 - capitals are unique;
 - settings are valid.
@@ -966,10 +966,12 @@ Main Menu
 4. A civilization inside a game session is an independent instance.
 5. A capital is selected from cities already present on the chosen map.
 6. One city cannot be the capital of multiple civilizations.
-7. A started game uses a snapshot of the selected rules preset.
-8. Active gameplay does not allow editing by default.
-9. Debug editing affects only the active game session.
-10. The map remains the dominant visual element in both the editor and the game.
+7. At game start, only capital cities are owned; other map cities remain unclaimed.
+8. New Game (F9) requires exactly one Human civilization (single-player); additional Humans are deferred.
+9. A started game uses a snapshot of the selected rules preset.
+10. Active gameplay does not allow editing by default.
+11. Debug editing affects only the active game session.
+12. The map remains the dominant visual element in both the editor and the game.
 
 ---
 
@@ -982,13 +984,13 @@ Before adding units, combat, diplomacy, great people, espionage, or other large 
 3. reusable map model;
 4. reusable civilization model;
 5. rules presets;
-6. New Game wizard;
-7. separation between map templates and game sessions;
-8. separate editor and active-game screens;
-9. local persistence;
-10. staged map-generation tools;
-11. display layers;
-12. debug editing boundaries.
+6. New Game wizard (done — F9);
+7. separation between map templates and game sessions (done — F2/F9);
+8. separate editor and active-game screens (editor done; Active Game shell is F10);
+9. local persistence (done — F3);
+10. staged map-generation tools (done — F7);
+11. display layers (done — F6);
+12. debug editing boundaries (F12).
 
 ---
 

@@ -105,6 +105,11 @@ Button (primary/secondary/ghost/danger × sm/md/lg), IconButton, Card/CardLink, 
 
 F8 also uses `ParameterField` (`src/components/rules/ParameterField.tsx`) for labeled numeric/percentage balance parameters with changed badges and reset-field actions.
 
+F9 wizard helpers (`src/components/newGame/`):
+- `WizardSteps` — semantic step navigation with reachable/current/complete states;
+- `SelectionCard` — keyboard-accessible selectable row with non-color-only selected label;
+- `ValidationSummary` — alert list for step/setup errors.
+
 States: hover, active/pressed (primary), disabled, focus-visible. Toast/Tooltip deferred until a screen needs them.
 
 ---

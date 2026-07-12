@@ -13,7 +13,8 @@
     "verify:editor-persistence": "tsx src/catalog/verifyEditorPersistence.ts",
     "verify:world-editor-ui": "tsx src/editor/verifyWorldEditorUi.ts",
     "verify:map-layers": "tsx src/game/mapLayers/verify.ts",
-    "verify:rules-presets": "tsx src/rules/verify.ts"
+    "verify:rules-presets": "tsx src/rules/verify.ts",
+    "verify:new-game": "tsx src/newGame/verify.ts"
   },
   "dependencies": {
     "dexie": "^4.4.4",

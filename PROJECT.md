@@ -106,7 +106,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F6 | World Editor Restructure (command bar + right panel) | Done |
 | F7 | Independent Map Layers | Done |
 | F8 | Rules Presets (Settings & Balance) | Done |
-| F9–F12 | New game, active game, … | Queued |
+| F9 | New Game Wizard | Done |
+| F10–F12 | Active game shell, popups, debug editing | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

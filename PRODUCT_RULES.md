@@ -80,9 +80,12 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 
 ## 5. Civilization Rules
 
-- A civilization has: `name`, `color`, `playerType` (`human` | `ai` — currently every civilization is created as `ai`, since there is no human-controlled civilization in the simulation yet), `cultureName` (flavor text), `flagEmoji`, and `capitalCityId`.
+- A civilization has: `name`, `color`, `playerType` (`human` | `ai`), `cultureName` (flavor text), `flagEmoji`, and `capitalCityId`.
+- New Game (F9) creates session civilizations as snapshots from catalog templates. F9 enforces **exactly one Human** civilization (single-player); others are AI. Teams and multi-human setups are deferred.
+- At game creation, only assigned **capital** cities become owned (`civId` set, `isCapital: true`). Other map cities remain unclaimed. One city cannot be the capital of multiple civilizations.
 - A civilization's flag is rendered next to any city it owns (not just the capital) on the map, once a capital has been assigned.
-- Deleting a civilization releases all of its cities back to `civId: null` (unclaimed) and clears their `isCapital` flag — it does not delete the cities themselves.
+- Deleting a civilization in the legacy editor releases all of its cities back to `civId: null` (unclaimed) and clears their `isCapital` flag — it does not delete the cities themselves.
+- Legacy World Editor Sim still creates civilizations as `ai` until Active Game (F10) loads Human control from a GameSession.
 
 ---
 
@@ -149,7 +152,7 @@ The following are intentionally **not** implemented yet, and no feature should a
 - Units, movement, worker/settler actions, production queues (Milestone M6).
 - Combat of any kind (Milestone M7).
 - AI decision-making beyond the simple nearest-city annexation rule, and diplomacy (Milestone M8).
-- Multiplayer, human-vs-human play, or any human-controlled civilization inside the simulation.
+- Multiplayer or human-vs-human play. F9 creates exactly one Human civilization in a GameSession; Active Game control (F10) is not wired yet. Legacy World Editor Sim still treats civilizations as AI-only.
 - Growth bonuses derived from terrain, resources, or buildings (only a manually-set flat per-city bonus exists today).
 - Any server-side validation or persistence — see `DEPLOYMENT.md`.
 

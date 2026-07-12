@@ -1,13 +1,15 @@
 # Civ Browser — Current Status
 
 **Status:** Active
-**Last updated:** 2026-07-11
+**Last updated:** 2026-07-12
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
 
 > This is the frequently updated implementation snapshot for Civ Browser.
 > It records what's actually implemented (per milestone), what's known-broken or deliberately deferred, and the nearest next steps.
 > After every repository-changing agent iteration, reconcile this snapshot and update the change logs (§§6–8). Full procedure: `AI_AGENTS.md` §14.
+>
+> Foundation **sources of truth** (in-repo): `PRODUCT_STRUCTURE.md` (target product areas/screens/flows) and `FOUNDATION_IMPLEMENTATION_PLAN.md` (F1–F12 sequence and acceptance criteria).
 
 ---
 

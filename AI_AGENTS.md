@@ -264,7 +264,8 @@ Commit
 
 Update the relevant document when:
 
-- a milestone (M1-M8) changes status or scope → `PROJECT.md` (roadmap table) and `CURRENT_STATUS.md`;
+- a milestone (M1-M8 or foundation F1–F12) changes status or scope → `PROJECT.md` / `CURRENT_STATUS.md` (and `FOUNDATION_IMPLEMENTATION_PLAN.md` for F*);
+- target product areas, screens, or flows change → `PRODUCT_STRUCTURE.md`;
 - a game design rule changes (growth formula, resource rules, annexation logic, etc.) → `PRODUCT_RULES.md`;
 - the file/data structure changes meaningfully (new store fields, new files, new hex-math helpers) → `ARCHITECTURE.md`;
 - a deployment/hosting decision is finally made → `DEPLOYMENT.md`.

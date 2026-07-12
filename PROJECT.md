@@ -1,7 +1,7 @@
 # Civ Browser — Project Overview
 
 **Status:** Active development (hobby project)
-**Last updated:** 2026-07-11
+**Last updated:** 2026-07-12
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
 **Main branch:** `main`
@@ -179,6 +179,8 @@ Cursor prompts in this project are scoped to one logical change at a time (e.g. 
 
 - **`PROJECT.md`** — this file. Vision, product areas, roadmap.
 - **`AI_AGENTS.md`** — mandatory operating instructions for Cursor and other AI coding agents, including the repository-context requirement.
+- **`PRODUCT_STRUCTURE.md`** — target product areas, screens, flows, and UI behavior after the proof-of-concept stage.
+- **`FOUNDATION_IMPLEMENTATION_PLAN.md`** — foundation milestones (F1–F12), acceptance criteria, and implementation sequence.
 - **`ARCHITECTURE.md`** — tech stack, file structure, data model, hex grid math, key algorithmic lessons learned.
 - **`DEPLOYMENT.md`** — current (currently empty/local-only) deployment state and what will need deciding before shipping anywhere.
 - **`PRODUCT_RULES.md`** — game design invariants: terrain/resource/growth/culture/annexation rules that must stay consistent.
@@ -189,9 +191,11 @@ Cursor prompts in this project are scoped to one logical change at a time (e.g. 
 1. `PROJECT.md`
 2. `AI_AGENTS.md`
 3. `CURRENT_STATUS.md`
-4. `PRODUCT_RULES.md`
-5. `ARCHITECTURE.md`
-6. `DEPLOYMENT.md`
+4. `PRODUCT_STRUCTURE.md`
+5. `FOUNDATION_IMPLEMENTATION_PLAN.md`
+6. `PRODUCT_RULES.md`
+7. `ARCHITECTURE.md`
+8. `DEPLOYMENT.md`
 
 ## 12. Source-of-Truth Hierarchy
 
@@ -199,10 +203,11 @@ When information conflicts, use this order:
 
 1. current repository code and actual in-browser behavior;
 2. `PRODUCT_RULES.md`;
-3. `ARCHITECTURE.md`;
-4. `CURRENT_STATUS.md`;
-5. `PROJECT.md`;
-6. old chat history / memory.
+3. `PRODUCT_STRUCTURE.md` (target product behavior) / `FOUNDATION_IMPLEMENTATION_PLAN.md` (foundation sequence);
+4. `ARCHITECTURE.md`;
+5. `CURRENT_STATUS.md`;
+6. `PROJECT.md`;
+7. old chat history / memory.
 
 ## 13. Maintenance Policy
 

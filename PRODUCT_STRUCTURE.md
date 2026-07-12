@@ -1,9 +1,14 @@
 # Civ Browser — Product Structure
 
-**Status:** Draft  
-**Purpose:** Target product structure after the proof-of-concept stage  
-**Repository:** `https://github.com/jeehead-cloud/civ-browser`  
+**Status:** Target structure (F1 application shell implemented; catalogs/sessions not yet)
+**Purpose:** Target product structure after the proof-of-concept stage
+**Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
+**Project:** Civ Browser
+
+> Implementation sequence and milestone status live in `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+> What is actually running today lives in `CURRENT_STATUS.md`.
+> This file describes the **target** product areas, screens, and flows.
 
 ---
 
@@ -166,6 +171,8 @@ The same principle applies to maps, civilizations, buildings, units, technologie
 The World Editor follows the structure and interaction model of the Civilization V WorldBuilder.
 
 The map occupies most of the screen.
+
+**Current bridge (F1):** until maps are reusable catalog items (F4/F5), the existing World Builder MVP is reachable at `/library/maps/current/edit`. The target route remains `/library/maps/:mapId/edit` once a selected map id exists.
 
 ### 6.1. Top Menu
 

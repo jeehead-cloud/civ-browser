@@ -1,7 +1,7 @@
 # Civ Browser — Architecture
 
 **Status:** Active
-**Last updated:** 2026-07-11
+**Last updated:** 2026-07-12
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
 
@@ -289,7 +289,9 @@ Loading a file **fully replaces** the current map's tiles (and cities/civilizati
 
 - Vision/roadmap → `PROJECT.md`
 - AI-agent workflow → `AI_AGENTS.md`
-- This document → architecture, stack, data model, hex math, lessons
+- Target product areas / screens / flows → `PRODUCT_STRUCTURE.md`
+- Foundation milestones and sequence → `FOUNDATION_IMPLEMENTATION_PLAN.md`
+- This document → architecture, stack, data model, hex math, lessons, **actual** routes
 - Deployment → `DEPLOYMENT.md`
 - Game design invariants → `PRODUCT_RULES.md`
 - Current implementation snapshot → `CURRENT_STATUS.md`

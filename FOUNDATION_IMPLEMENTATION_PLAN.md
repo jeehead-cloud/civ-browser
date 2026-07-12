@@ -1,9 +1,10 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Draft  
-**Purpose:** Turn the target product structure into an incremental implementation plan  
-**Repository:** `https://github.com/jeehead-cloud/civ-browser`  
+**Status:** Active (F1 done; F2+ queued)
+**Purpose:** Turn the target product structure into an incremental implementation plan
+**Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
+**Project:** Civ Browser
 
 ---
 
@@ -97,7 +98,7 @@ Changes in an active game must not modify reusable source templates.
 
 Use explicit application routes.
 
-Recommended initial route structure:
+Recommended initial route structure (target):
 
 ```text
 /
@@ -109,6 +110,8 @@ Recommended initial route structure:
  /games/new
  /games/:gameId
 ```
+
+**Current F1 reality:** the working World Editor MVP is reachable at `/library/maps/current/edit` until maps become catalog items (F4/F5). Keep `/library/maps/:mapId/edit` as the target; do not treat `current` as the long-term map id scheme.
 
 Future routes may include:
 
@@ -163,24 +166,26 @@ Names may change during implementation, but responsibilities must remain separat
 
 ## 4. Milestone Overview
 
-| ID | Milestone | Outcome |
-|---|---|---|
-| F1 | Application Shell and Routing | Separate screens and stable navigation |
-| F2 | Domain Model Separation | Reusable templates and active sessions become distinct |
-| F3 | Persistence Abstraction | Local catalogs and game saves |
-| F4 | Content Library | Maps and civilizations become reusable catalog items |
-| F5 | World Editor Migration | Existing editor moved into dedicated route |
-| F6 | World Editor Restructure | New Civ V-like editor structure |
-| F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately |
-| F8 | Rules Presets | Scalable settings and balance system |
-| F9 | New Game Wizard | Create game sessions from templates |
-| F10 | Active Game Shell | Separate gameplay UI |
-| F11 | Context Popups and Panels | Tile, city, events, civilization summaries |
-| F12 | Debug Editing Boundary | Safe live editing of current session only |
+| ID | Milestone | Outcome | Status |
+|---|---|---|---|
+| F1 | Application Shell and Routing | Separate screens and stable navigation | **Done** |
+| F2 | Domain Model Separation | Reusable templates and active sessions become distinct | Queued |
+| F3 | Persistence Abstraction | Local catalogs and game saves | Queued |
+| F4 | Content Library | Maps and civilizations become reusable catalog items | Queued |
+| F5 | World Editor Migration | Existing editor moved into dedicated route | Queued |
+| F6 | World Editor Restructure | New Civ V-like editor structure | Queued |
+| F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | Queued |
+| F8 | Rules Presets | Scalable settings and balance system | Queued |
+| F9 | New Game Wizard | Create game sessions from templates | Queued |
+| F10 | Active Game Shell | Separate gameplay UI | Queued |
+| F11 | Context Popups and Panels | Tile, city, events, civilization summaries | Queued |
+| F12 | Debug Editing Boundary | Safe live editing of current session only | Queued |
 
 ---
 
 # 5. F1 — Application Shell and Routing
+
+**Status: Implemented** (committed with the application shell / routing work).
 
 ## Goal
 
@@ -211,7 +216,21 @@ The current application may initially be mounted unchanged inside the World Edit
 - direct URL access works;
 - browser refresh keeps the current route.
 
-**F1 route note:** until maps exist as catalog items (F4/F5), the working MVP editor is mounted at `/library/maps/current/edit` rather than `/library/maps/:mapId/edit`. The `current` segment is temporary.
+## Implemented routes (as of F1)
+
+| Route | Role |
+|---|---|
+| `/` | Main Menu |
+| `/library` | Library home (placeholder links) |
+| `/library/maps` | Maps catalog placeholder |
+| `/library/maps/current/edit` | **Temporary** World Editor hosting the existing MVP |
+| `/library/civilizations` | Civilizations catalog placeholder |
+| `/settings` | Settings & Balance placeholder |
+| `/games/new` | New Game placeholder |
+| `/games/:gameId` | Active Game placeholder (route id only; no session) |
+| `*` | Not found |
+
+**Route note:** keep `/library/maps/:mapId/edit` as the target for F5. The `current` segment is temporary until maps are catalog items (F4/F5).
 
 ## Acceptance Criteria
 
@@ -1041,24 +1060,26 @@ The first implementation batch should contain only:
 
 # 23. First Cursor Task
 
-The first Cursor task should be:
+**F1 is complete.** The next Cursor task in Batch 1 should be:
+
+```text
+Introduce template vs game-session domain models without breaking the current MVP.
+```
+
+(See F2 — Domain Model Separation.)
+
+The original first task was:
 
 ```text
 Add the application shell and routing without changing current gameplay behavior.
 ```
 
-It should:
+It delivered:
 
-- verify repository context;
-- inspect the current app entry point and component structure;
-- add routing;
-- create placeholder screens;
-- mount the current application inside the World Editor route;
-- preserve all existing behavior;
-- run `npm run build`;
-- update `CURRENT_STATUS.md` and `ARCHITECTURE.md` if appropriate.
-
-Do not combine this with IndexedDB, domain migration, or UI redesign.
+- routing and Main Menu;
+- placeholder screens;
+- the existing application mounted at `/library/maps/current/edit`;
+- preserved MVP gameplay behavior.
 
 ---
 

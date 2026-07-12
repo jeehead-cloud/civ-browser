@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1 done; F2+ queued)
+**Status:** Active (F1–F2 done; F3+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -170,7 +170,7 @@ Names may change during implementation, but responsibilities must remain separat
 |---|---|---|---|
 | F1 | Application Shell and Routing | Separate screens and stable navigation | **Done** |
 | D1 | Design System Foundation (supporting) | Atlas tokens, UI primitives, shell/non-editor restyle; editor preserved for F6 | **Done** |
-| F2 | Domain Model Separation | Reusable templates and active sessions become distinct | Queued |
+| F2 | Domain Model Separation | Reusable templates and active sessions become distinct | **Done** |
 | F3 | Persistence Abstraction | Local catalogs and game saves | Queued |
 | F4 | Content Library | Maps and civilizations become reusable catalog items | Queued |
 | F5 | World Editor Migration | Existing editor moved into dedicated route | Queued |
@@ -275,6 +275,8 @@ Translate the Claude-generated Atlas package under `Design System/` into maintai
 
 # 6. F2 — Domain Model Separation
 
+**Status: Implemented** (types + adapters only; Zustand migration and persistence deferred).
+
 ## Goal
 
 Introduce reusable templates and active game session models.
@@ -346,10 +348,20 @@ Contains:
 
 ## Deliverables
 
-- new TypeScript types;
-- conversion helpers from current state;
-- no immediate deletion of legacy types unless safe;
-- documentation update in `ARCHITECTURE.md`.
+- new TypeScript types under `src/domain/`;
+- conversion helpers in `src/domain/adapters.ts`;
+- legacy types in `src/game/types.ts` retained as runtime source (approach A);
+- documentation update in `ARCHITECTURE.md` §3.1;
+- focused verification via `npx --yes tsx src/domain/verify.ts`.
+
+## Implemented notes / deviations
+
+- `GameRulesSnapshot` is an explicit session-embedded copy of preset settings (with optional provenance ids).
+- `GameCity.sourceCityTemplateId` is optional for legacy conversions.
+- `GameSession.maximumTurns` is optional (product-aligned; not used by runtime yet).
+- `CivilizationTemplate.leader` is optional/reserved; legacy data has no leader field.
+- Tile geometry still uses legacy `Tile` from `src/game/types.ts` (shared low-level shape, no redesign).
+- Complete-capital validation is opt-in (`requireCompleteCapitals`) because MVP setup often has null capitals.
 
 ## Acceptance Criteria
 

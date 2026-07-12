@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1 (Application Shell and Routing) is implemented.** **D1 (Design System Foundation) is implemented** as a supporting task between F1 and F2: Atlas tokens, shell/UI primitives, and restyled non-editor screens. The World Editor gameplay UI is deliberately preserved for F6.
+**F1 (Application Shell and Routing) is implemented.** **D1 (Design System Foundation) is implemented.** **F2 (Domain Model Separation) is implemented** as types + adapters only — the live Zustand store still uses legacy `src/game/types.ts`.
 
-Domain templates, IndexedDB, catalogs, and New Game wizard are not started (F2+). There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8), after the foundation batch.
+IndexedDB, catalogs, and New Game wizard are not started (F3+). There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8), after the foundation batch.
 
 ---
 
@@ -46,9 +46,20 @@ Not done in D1 (deferred):
 - Real catalog/settings/new-game/active-game behavior → F4–F10.
 - Lucide icon pack / logo assets (no production assets copied yet; `src/assets/design-system/` reserved).
 
-### F2–F12 — Not started
+### F2 — Domain Model Separation (Done)
 
-Next: **F2 Domain Model Separation** (templates vs sessions). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- Domain types under `src/domain/`: `MapTemplate`, `MapCityTemplate`, `CivilizationTemplate`, `CivilizationInstance`, `GameRulesPreset`, `GameRulesSnapshot`, `GameSession`, `GameCity`.
+- Adapters in `src/domain/adapters.ts` with `ConversionResult` and deep-clone boundaries.
+- Focused verification: `npx --yes tsx src/domain/verify.ts` (deep-copy + invariants + JSON serialization).
+
+Still legacy (intentionally):
+- Zustand `GameState` / editor / turn engine / v1 JSON import-export unchanged and not replaced by `GameSession`.
+- Domain layer not wired into UI or persistence.
+
+### F3–F12 — Not started
+
+Next: **F3 Persistence Abstraction** (IndexedDB repositories). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -144,9 +155,8 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 ## 5. Nearest Next Steps
 
-1. **F2 — Domain Model Separation** (MapTemplate, CivilizationTemplate, GameSession, rules preset types; keep MVP working).
-2. **F3 — Persistence Abstraction** (IndexedDB repositories).
-3. Then F4 Content Library / F5 editor migration; World Editor visual redesign remains **F6**; M5 event log remains open on the gameplay side but foundation structure is the priority.
+1. **F3 — Persistence Abstraction** (IndexedDB repositories over the F2 domain types).
+2. Then F4 Content Library / F5 editor migration; World Editor visual redesign remains **F6**; M5 event log remains open on the gameplay side but foundation structure is the priority.
 
 ---
 
@@ -177,6 +187,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F2 Domain Model Separation
+
+- Classification: Significant
+- Summary: Added `src/domain/` template vs session TypeScript models and deep-copy adapters; legacy Zustand/`GameState` and v1 JSON I/O unchanged; no persistence or UI wiring.
+- Files: `src/domain/*`, `ARCHITECTURE.md`, `CURRENT_STATUS.md`, `FOUNDATION_IMPLEMENTATION_PLAN.md`, `PROJECT.md`
+- Validation: `npm run build` PASS; `git diff --check` PASS; `npx --yes tsx src/domain/verify.ts` PASS; manual editor regression recorded in completing agent response
 
 ### 2026-07-12 — D1 Design System Foundation
 
@@ -218,6 +235,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F2 Domain Model Separation
+
+- Area: Architecture
+- Change: Introduced compile-time domain types separating reusable templates (`MapTemplate`, `CivilizationTemplate`, `GameRulesPreset`) from session state (`GameSession`, `GameCity`, `CivilizationInstance`, rules snapshots), plus adapters with deep-copy guarantees. Runtime remains on legacy `src/game` types until later milestones.
+- Reason: Establishes the type boundary required by `PRODUCT_STRUCTURE.md` before F3 persistence and F4+ catalogs without rewriting the working MVP store.
+- Source of truth: `ARCHITECTURE.md` §3.1, `src/domain/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F2
 
 ### 2026-07-12 — D1 Design System Foundation
 

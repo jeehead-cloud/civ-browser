@@ -98,7 +98,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | ID | Milestone | Status |
 |---|---|---|
 | F1 | Application Shell and Routing | Done |
-| F2 | Domain Model Separation | Queued |
+| D1 | Design System Foundation (supporting) | Done |
+| F2 | Domain Model Separation | Done |
 | F3 | Persistence Abstraction | Queued |
 | F4–F12 | Library, editor migration, presets, new game, active game, … | Queued |
 

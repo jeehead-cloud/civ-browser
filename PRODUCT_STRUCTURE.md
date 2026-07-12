@@ -172,7 +172,7 @@ The World Editor follows the structure and interaction model of the Civilization
 
 The map occupies most of the screen.
 
-**Current editor routes:** catalog maps open at `/library/maps/:mapId/edit` with repository load/save (F5). Scratch MVP remains at `/library/maps/current/edit` without catalog binding. **F6** implements the top command bar + map + right-panel layout (Tiles / Cities / Display); temporary Simulation access holds legacy setup/play panels until F8–F10.
+**Current editor routes:** catalog maps open at `/library/maps/:mapId/edit` with repository load/save (F5). Scratch MVP remains at `/library/maps/current/edit` without catalog binding. **F6** implements the top command bar + map + right-panel layout (Tiles / Cities / Display); temporary Simulation access holds legacy setup/play panels until F8–F10. **F7** wires independent layer generate/clear ops into Tiles subsections.
 
 ### 6.1. Top Menu
 
@@ -230,14 +230,17 @@ This section contains single-tile editing, brush settings, and drawing tools.
 ### 8.2. Terrain
 
 - select terrain type;
-- paint terrain with the brush.
+- paint terrain with the brush;
+- generate terrain only (base landscape; preserves cities; does not run mountain/river/feature/resource generators);
+- full procedural / Earth-like remain separate full-map actions.
 
 ### 8.3. Features
 
 - forest;
 - jungle;
 - swamp;
-- remove feature.
+- remove feature;
+- generate / clear all features (F7).
 
 ### 8.4. Mountains and Hills
 
@@ -259,7 +262,7 @@ This section contains single-tile editing, brush settings, and drawing tools.
 
 - choose resource;
 - add or remove;
-- configure quantity;
+- configure placement density (Sparse / Standard / Rich) — generation parameter, not per-tile quantity;
 - scatter resources randomly;
 - remove all resources.
 

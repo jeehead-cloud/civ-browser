@@ -56,6 +56,8 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 - Resource placement must stay **sparse**: roll once per tile whether it gets a resource at all (base chance differs for land vs. water — water tiles have very few competing resource options, so their base chance must be set lower, or a single resource like "whales" will blanket the ocean), then weighted-pick among the resources that match that tile.
 - Regional bias (e.g. more oil in a "Middle East"-shaped box on the hand-authored Earth map) is a multiplier on top of the normal weight, not a separate independent roll.
 - Resources currently occupy a single tile each (no multi-tile "deposits" and no in-tile quantity indicator yet) — if/when a "resource richness/quantity" mechanic is added, it should replace the current one-resource-per-tile assumption deliberately, not accidentally.
+- **F7 editor density** (Sparse / Standard / Rich) is a map-wide generation chance multiplier used when randomizing the resource layer. It is not stored per tile and does not change the one-resource-per-tile model.
+- Independent World Editor layer operations (terrain / features / mountains-hills / rivers / resources) must preserve unrelated layers except for documented compatibility cleanups (e.g. clearing land resources when a tile becomes water). Cities must never be silently deleted by layer ops.
 
 ---
 

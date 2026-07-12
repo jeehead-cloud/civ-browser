@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -125,6 +125,7 @@ civ-browser/
     │   └── editorPersistenceVerification.ts / verifyEditorPersistence.ts
     ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
     ├── game/                      — legacy runtime types + Zustand store
+    │   └── mapLayers/             — F7 independent layer operations + verify:map-layers
     └── components/
         ├── AppShell.tsx
         ├── ui/                    — Button, Accordion, SegmentedControl, Dialog, …
@@ -229,6 +230,21 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Cities | Create via existing modal; list/search/center/edit; delete with confirm (not via Clear Tile) |
 | Deferred | Resize, mini-map, F7 generation ops, improvements/roads/labels models |
 | Verification | `npm run verify:world-editor-ui` |
+
+## 3.6. Independent map layers (F7)
+
+| Item | Behavior |
+|---|---|
+| Module | `src/game/mapLayers/` — pure ops returning `LayerOpResult` (clone-in, no caller mutation) |
+| RNG | Local `mulberry32` (same algorithm as `mapGenerator`); optional explicit seed |
+| Store | `applyLayerResult` — one tiles update per op; `editorDirty` only if `changed` |
+| Terrain Only | Base ocean/coast/lake/biomes; skip city tiles; clean water-incompatible overlays; does not place mountains/rivers/features/resources |
+| Features | Clear all vegetation / regenerate; skip placements that would invalidate existing resources |
+| Mountains/Hills | Clear all; random small cluster (3–12); random chain (6–24); never on water/cities; no mountain+hills |
+| Rivers | Clear all; short/long downhill paths with mirrored edges |
+| Resources | Clear all; randomize with Sparse/Standard/Rich density multiplier (not per-tile quantity) |
+| Full map | Existing `regenerateMap` / `generateEarthMap` remain distinct full-pipeline actions |
+| Verification | `npm run verify:map-layers` |
 
 ---
 

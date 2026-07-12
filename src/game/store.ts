@@ -9,6 +9,21 @@ import {
   EditorDisplayPreset,
   toggleDisplayLayer,
 } from '../editor/displayLayers'
+import {
+  addRandomLongRiver,
+  addRandomMountainChain,
+  addRandomShortRiver,
+  addRandomSmallMountainArea,
+  clearAllFeatures,
+  clearAllMountainsAndHills,
+  clearAllResources,
+  clearAllRivers,
+  generateFeatures,
+  generateResources,
+  generateTerrainOnly,
+  LayerOpResult,
+  ResourceDensity,
+} from './mapLayers'
 
 // Размер карты — меняется здесь. 220x160 (~35 000 гексов) — компромисс между
 // "ощущением огромного мира" и тем, чтобы ИИ/перемещение юнитов не превратились
@@ -67,6 +82,23 @@ interface Store {
   paintAt: (center: string) => void
   regenerateMap: (seed?: number) => void
   generateEarthMap: (seed?: number) => void
+  /** F7: apply a layer operation result (dirty only if changed). */
+  applyLayerResult: (result: LayerOpResult) => LayerOpResult
+  generateTerrainLayer: (seed?: number) => LayerOpResult
+  clearFeaturesLayer: () => LayerOpResult
+  generateFeaturesLayer: (seed?: number) => LayerOpResult
+  clearMountainsHillsLayer: () => LayerOpResult
+  addSmallMountainArea: (seed?: number) => LayerOpResult
+  addMountainChain: (seed?: number) => LayerOpResult
+  clearRiversLayer: () => LayerOpResult
+  addShortRiver: (seed?: number) => LayerOpResult
+  addLongRiver: (seed?: number) => LayerOpResult
+  clearResourcesLayer: () => LayerOpResult
+  generateResourcesLayer: (density?: ResourceDensity, seed?: number) => LayerOpResult
+  resourceDensity: ResourceDensity
+  setResourceDensity: (d: ResourceDensity) => void
+  lastLayerOpMessage: string | null
+  clearLastLayerOpMessage: () => void
   setViewMode: (m: 'edit' | 'view') => void
   setViewingTile: (key: string | null) => void
   setAddingCityAt: (key: string | null) => void
@@ -200,6 +232,103 @@ export const useGameStore = create<Store>((set, get) => ({
   editorDirty: false,
   lastSavedAt: null,
   catalogBridge: null,
+  resourceDensity: 'standard',
+  lastLayerOpMessage: null,
+  setResourceDensity: (d) => set({ resourceDensity: d }),
+  clearLastLayerOpMessage: () => set({ lastLayerOpMessage: null }),
+  applyLayerResult: (result) => {
+    if (!result.ok) {
+      set({ lastLayerOpMessage: result.message })
+      return result
+    }
+    if (result.changed && result.tiles) {
+      const { game } = get()
+      set({
+        game: { ...game, tiles: result.tiles },
+        editorDirty: true,
+        lastLayerOpMessage: result.message,
+      })
+    } else {
+      set({ lastLayerOpMessage: result.message })
+    }
+    return result
+  },
+  generateTerrainLayer: (seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      generateTerrainOnly(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+      }),
+    )
+  },
+  clearFeaturesLayer: () => get().applyLayerResult(clearAllFeatures(get().game.tiles)),
+  generateFeaturesLayer: (seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      generateFeatures(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+      }),
+    )
+  },
+  clearMountainsHillsLayer: () =>
+    get().applyLayerResult(clearAllMountainsAndHills(get().game.tiles)),
+  addSmallMountainArea: (seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      addRandomSmallMountainArea(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+      }),
+    )
+  },
+  addMountainChain: (seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      addRandomMountainChain(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+      }),
+    )
+  },
+  clearRiversLayer: () => get().applyLayerResult(clearAllRivers(get().game.tiles)),
+  addShortRiver: (seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      addRandomShortRiver(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+      }),
+    )
+  },
+  addLongRiver: (seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      addRandomLongRiver(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+      }),
+    )
+  },
+  clearResourcesLayer: () => get().applyLayerResult(clearAllResources(get().game.tiles)),
+  generateResourcesLayer: (density, seed) => {
+    const s = get()
+    return get().applyLayerResult(
+      generateResources(s.game.tiles, {
+        width: s.activeMapWidth,
+        height: s.activeMapHeight,
+        seed,
+        density: density ?? s.resourceDensity,
+      }),
+    )
+  },
   editorDisplay: { ...DEFAULT_DISPLAY_LAYERS },
   cameraFocusRequest: null,
   selectedEditorCityId: null,

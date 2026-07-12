@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F6 done; F7+ queued)
+**Status:** Active (F1–F7 done; F8+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -175,7 +175,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F4 | Content Library | Maps and civilizations become reusable catalog items | **Done** |
 | F5 | World Editor Migration | Existing editor moved into dedicated selected-map route | **Done** |
 | F6 | World Editor Restructure | New Civ V-like editor structure | **Done** |
-| F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | Queued |
+| F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | **Done** |
 | F8 | Rules Presets | Scalable settings and balance system | Queued |
 | F9 | New Game Wizard | Create game sessions from templates | Queued |
 | F10 | Active Game Shell | Separate gameplay UI | Queued |
@@ -653,11 +653,13 @@ Restructure the editor UI around the agreed Civ V WorldBuilder model.
 - Clear Tile implemented (preserves terrain + city; clears features/hills/rivers/resource/owner).
 - Display layers/presets are UI-only (`editorDisplay`); do not mark dirty.
 - Verification: `npm run verify:world-editor-ui`.
-- F7 random/clear-all generation actions remain disabled placeholders only.
+- Layer generation Clear/Random actions implemented in **F7** (no longer placeholders).
 
 ---
 
 # 11. F7 — Independent Map Layers
+
+**Status: Implemented** (pure `src/game/mapLayers/` ops + F6 Tiles UI wiring; full procedural/Earth kept distinct).
 
 ## Goal
 
@@ -692,7 +694,7 @@ Introduce or expose independent operations for:
 ### Resources
 
 - add/remove;
-- quantity;
+- quantity (as map-wide density: Sparse / Standard / Rich);
 - random scatter;
 - clear all.
 
@@ -710,6 +712,17 @@ Introduce or expose independent operations for:
 - generating mountains does not regenerate the whole map;
 - existing full-map generation may remain as a convenience action;
 - `npm run build` passes.
+
+## Implementation notes
+
+- Module: `src/game/mapLayers/` (terrain, feature, elevation, river, resource + validation + mulberry32 RNG).
+- Store applies one update per successful op; dirty only when `changed`.
+- Terrain Only skips city tiles; cleans incompatible overlays on water; does not run mountain/river/feature/resource generators.
+- Features prefer skipping placements that would invalidate existing resources.
+- Rivers: short 3–10 / long 10–30 steps; mirrored edges verified numerically.
+- Resource density is a generation multiplier, not per-tile quantity.
+- Verification: `npm run verify:map-layers`.
+- Deviation: Earth generation remains full-map only (not split into layers).
 
 ---
 

@@ -47,8 +47,9 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 - F5: load selected MapTemplate; Save / Save As; dirty badge; leave confirm; Map Description dialog.
 - F6 layout: top command bar + dominant map + right panel (Tiles / Cities / Display / temporary Sim).
+- F7: independent Terrain Only / Features / Mountains / Rivers / Resources ops in Tiles subsections (confirmations for clear-all).
 - No permanent left toolbar. View/Edit switch; display layers/presets (non-dirty).
-- Deferred to F7+: random/clear-all generation ops; Resize; Mini-map; improvements/roads/labels models.
+- Deferred: Resize; Mini-map; improvements/roads/labels models; Earth split into layers.
 - Scratch: `/library/maps/current/edit` — same F6 shell; Save disabled; Save As may create catalog item.
 
 ### Settings `/settings`

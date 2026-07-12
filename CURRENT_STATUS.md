@@ -17,7 +17,7 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F6 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), and World Editor IA restructure (F6: command bar + map + right panel). Scratch editor remains at `/library/maps/current/edit`. Settings / New Game / Active Game are still placeholders (F7+).
+**F1–F7 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), and independent map-layer operations (F7). Scratch editor remains at `/library/maps/current/edit`. Settings / New Game / Active Game are still placeholders (F8+).
 
 There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
 
@@ -91,18 +91,30 @@ Implemented:
 - Layout: top command bar + dominant map + right panel (~360px). No permanent left toolbar.
 - Command bar: Back/Open, map name/status, Save, Save As, Description, New Map (`?create=1`), Import/Export JSON, View Mode → Display. Resize / Mini-map disabled (planned).
 - Right panel: View/Edit switch; Tiles / Cities / Display / temporary Sim.
-- Tiles: Terrain, Features (vegetation), Mountains/Hills, Rivers, Resources, Clear Tile; planned subsections disabled (Improvements, Roads, Borders, Labels, F7 generation).
+- Tiles: Terrain (paint + Terrain Only + Full Procedural/Earth), Features, Mountains/Hills, Rivers, Resources (density), Clear Tile; planned: Improvements, Roads, Borders, Labels.
 - Cities: Create City tool, list/search, center, edit dialog, delete with confirm.
 - Display: supported layers + presets (Normal, Terrain Only, Resources Only, Cities Only, Relief); UI-only — does not dirty.
 - Temporary Sim section: CivilizationsPanel, PlayControlPanel, PlayersPanel, SettingsPanel (legacy until F8–F10).
 - Verification: `npm run verify:world-editor-ui`.
 
 Deferred / planned:
-- Mini-map; Resize; F7 independent generation ops; Political display preset; improvements/roads/labels data models.
+- Mini-map; Resize; Political display preset; improvements/roads/labels data models.
 
-### F7–F12 — Not started
+### F7 — Independent Map Layers (Done)
 
-Next: **F7 Independent Map Layers**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- Pure ops in `src/game/mapLayers/`: Terrain Only; Features generate/clear; Mountains clear/small/chain; Rivers clear/short/long; Resources clear/randomize with Sparse/Standard/Rich density.
+- Store `applyLayerResult` marks dirty only on real changes; one tiles update per op.
+- Policies: city tiles skipped by terrain/mountain placement; river edge mirroring; features skip resource-invalidating placements; resource density is a generation multiplier (not per-tile quantity).
+- Full procedural + Earth-like remain distinct full-map actions in Terrain accordion.
+- Verification: `npm run verify:map-layers`.
+
+Deferred:
+- Splitting Earth generation into independent layers; Web Workers; per-tile resource quantity.
+
+### F8–F12 — Not started
+
+Next: **F8 Rules Presets**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -232,6 +244,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
 
+### 2026-07-12 — F7 Independent Map Layers
+
+- Classification: Significant
+- Summary: Added pure `src/game/mapLayers/` operations for terrain-only, features, mountains/hills, rivers, and resources with density; wired into F6 Tiles panel with confirmations; dirty only on real changes; `npm run verify:map-layers`.
+- Files: `src/game/mapLayers/*`, `src/game/store.ts`, `src/components/editor/TilesSection.tsx`, `package.json`, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS; all verify:* including `verify:map-layers` PASS; interactive catalog Save/refresh after layer ops NOT exhaustively run in browser
+
 ### 2026-07-12 — F6 World Editor Restructure
 
 - Classification: Significant
@@ -308,10 +327,17 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
 
+### 2026-07-12 — F7 Independent Map Layers
+
+- Area: Product / Architecture / Gameplay tools
+- Change: World Editor can run terrain, feature, mountain/hill, river, and resource operations independently via pure `mapLayers` functions. Cities are never silently deleted; river edges stay mirrored; resource “quantity” is map-wide density only.
+- Reason: Enables iterative map authoring without full regenerations, matching Civ V WorldBuilder layer workflow.
+- Source of truth: `ARCHITECTURE.md` §3.6, `src/game/mapLayers/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F7
+
 ### 2026-07-12 — F6 World Editor Restructure
 
 - Area: Product / Architecture / UX
-- Change: World Editor now uses a Civilization V WorldBuilder-inspired shell: compact top command bar, dominant map canvas, and a structured right panel (View/Edit, Tiles, Cities, Display, temporary Simulation). Display-layer state is UI-only. F5 catalog persistence and v1 JSON remain. Mini-map and Resize are deferred; F7 generation actions are disabled placeholders only.
+- Change: World Editor now uses a Civilization V WorldBuilder-inspired shell: compact top command bar, dominant map canvas, and a structured right panel (View/Edit, Tiles, Cities, Display, temporary Simulation). Display-layer state is UI-only. F5 catalog persistence and v1 JSON remain. Mini-map and Resize are deferred.
 - Reason: Separates map-editing IA from legacy left-toolbar chrome before independent layer generation and Active Game UI work.
 - Source of truth: `ARCHITECTURE.md` §3.5, `src/components/editor/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F6
 

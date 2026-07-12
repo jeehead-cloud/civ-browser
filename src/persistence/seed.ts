@@ -1,4 +1,5 @@
 import type { GameRulesPreset } from '../domain/rules'
+import { STANDARD_RULES_VALUES } from '../domain/rulesDefaults'
 import type { RulesPresetRepository } from './repositories/types'
 
 /** Stable seed id — must not change once shipped so seed stays idempotent. */
@@ -13,11 +14,7 @@ export function createStandardRulesPreset(): GameRulesPreset {
     version: 1,
     createdAt: SEED_CREATED_AT,
     updatedAt: SEED_CREATED_AT,
-    settings: {
-      baseGrowthRate: 0.01,
-      capitalCulturePerTurn: 1,
-      cultureAnnexThreshold: 50,
-    },
+    settings: { ...STANDARD_RULES_VALUES },
   }
 }
 

@@ -15,13 +15,13 @@ export function LibraryHomePage() {
         <CardLink to="/library/maps">
           <strong>Maps</strong>
           <p style={{ margin: 'var(--space-2) 0 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-size-sm)' }}>
-            Map template catalog · placeholder until F4
+            Create, import, duplicate, export, and open map templates in the temporary editor bridge
           </p>
         </CardLink>
         <CardLink to="/library/civilizations">
           <strong>Civilizations</strong>
           <p style={{ margin: 'var(--space-2) 0 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-size-sm)' }}>
-            Civilization template catalog · placeholder until F4
+            Create and edit reusable civilization templates (name, culture, flag, color)
           </p>
         </CardLink>
       </div>

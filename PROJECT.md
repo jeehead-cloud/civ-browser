@@ -101,7 +101,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | D1 | Design System Foundation (supporting) | Done |
 | F2 | Domain Model Separation | Done |
 | F3 | Persistence Abstraction | Done |
-| F4–F12 | Library, editor migration, presets, new game, active game, … | Queued |
+| F4 | Content Library (Maps / Civilizations catalogs) | Done |
+| F5–F12 | Editor migration, presets, new game, active game, … | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

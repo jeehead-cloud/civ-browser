@@ -172,7 +172,7 @@ The World Editor follows the structure and interaction model of the Civilization
 
 The map occupies most of the screen.
 
-**Current bridge (F1):** until maps are reusable catalog items (F4/F5), the existing World Builder MVP is reachable at `/library/maps/current/edit`. The target route remains `/library/maps/:mapId/edit` once a selected map id exists.
+**Current bridge (F1–F4):** until selected-map editor persistence (F5), the World Builder MVP remains at `/library/maps/current/edit`. Catalog **Open** loads a `MapTemplate` into that temporary editor; edits are not written back to the catalog until F5. The target route remains `/library/maps/:mapId/edit`.
 
 ### 6.1. Top Menu
 

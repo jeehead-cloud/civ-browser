@@ -22,12 +22,13 @@
 | Map rendering | HTML5 Canvas 2D (raw `CanvasRenderingContext2D`) | Chosen over PixiJS/Phaser: no physics, no heavy sprite animation, and raw canvas keeps the rendering code simple and fully under the owner's control |
 | State management | Zustand | Single store in `src/game/store.ts` (legacy runtime; domain migration deferred) |
 | Domain model (F2) | `src/domain/` | Template vs session TypeScript types + adapters; not wired into Zustand yet |
-| Local persistence (F3) | IndexedDB via Dexie (`src/persistence/`) | Repository interfaces; UI wiring deferred to F4+ |
+| Local persistence (F3) | IndexedDB via Dexie (`src/persistence/`) | Repository interfaces used by F4 catalogs via `src/catalog/` |
+| Content catalogs (F4) | `src/catalog/` + library pages | Maps/Civilizations CRUD, v1 JSON import/export, temporary editor bridge |
 | Backend | **None** | Fully client-side; no server, no accounts |
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. Separately, F3 provides IndexedDB repositories for domain entities (maps, civilizations, rules presets, game sessions) that catalogs and New Game will use later — those repositories are **not** wired into the UI yet.
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs to those repositories; the World Editor still uses legacy Zustand memory (temporary bridge) until F5.
 
 ---
 
@@ -38,18 +39,18 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | Route | Screen | Status |
 |---|---|---|
 | `/` | Main Menu | Working |
-| `/library` | Game Content Library home | Placeholder (links only) |
-| `/library/maps` | Maps catalog | Placeholder |
-| `/library/maps/current/edit` | World Editor (existing MVP) | Working — temporary path until F4/F5 |
-| `/library/civilizations` | Civilizations catalog | Placeholder |
+| `/library` | Game Content Library home | Working (Maps + Civilizations entry) |
+| `/library/maps` | Maps catalog | Working (F4 repository-backed) |
+| `/library/maps/current/edit` | World Editor (existing MVP) | Working — temporary path until F5 selected-map route |
+| `/library/civilizations` | Civilizations catalog | Working (F4 repository-backed) |
 | `/settings` | Settings & Balance | Placeholder |
 | `/games/new` | New Game | Placeholder |
 | `/games/:gameId` | Active Game | Placeholder (shows `gameId` as route context only) |
 | `*` | Not found | Working |
 
-Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it keeps the full viewport for the map and only adds a slim Main Menu link strip.
+Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it keeps the full viewport for the map and only adds a slim chrome strip (Main Menu + Maps Catalog links).
 
-Target later route for a selected map: `/library/maps/:mapId/edit` (F5). The `current` segment is an intentional F1 bridge so the MVP remains reachable before catalogs exist.
+Target later route for a selected map: `/library/maps/:mapId/edit` (**F5**). Opening a catalog map in F4 loads tiles/cities into the current editor via a temporary bridge; edits are **not** written back to `MapRepository` until F5.
 
 ---
 
@@ -98,7 +99,7 @@ civ-browser/
     │   ├── verification.ts
     │   ├── verify.ts              — npm run verify:domain
     │   └── index.ts
-    ├── persistence/               — F3 IndexedDB (Dexie) repositories; not UI-wired
+    ├── persistence/               — F3 IndexedDB (Dexie) repositories
     │   ├── database.ts
     │   ├── schema.ts
     │   ├── errors.ts
@@ -107,10 +108,20 @@ civ-browser/
     │   ├── verification.ts
     │   ├── verify.ts              — npm run verify:persistence
     │   └── index.ts
+    ├── catalog/                   — F4 catalog services / hooks (no Dexie in React pages)
+    │   ├── persistence.ts         — lazy getCatalogPersistence singleton
+    │   ├── mapFactory.ts
+    │   ├── mapJson.ts             — v1 JSON ↔ MapTemplate
+    │   ├── civilizationFactory.ts
+    │   ├── editorBridgeCore.ts    — pure MapTemplate → legacy payload + sessionStorage meta
+    │   ├── editorBridge.ts        — loads payload into Zustand (no catalog write-back)
+    │   ├── hooks/
+    │   ├── verification.ts
+    │   └── verify.ts              — npm run verify:catalogs
     ├── game/                      — legacy runtime types + Zustand store
     └── components/
         ├── AppShell.tsx
-        ├── ui/                    — Button, Card, Panel, Badge, Input, Tabs, headers, EmptyState
+        ├── ui/                    — Button, Card, Panel, Badge, Input, Tabs, headers, EmptyState, Dialog, ConfirmDialog, FormField
         ├── MapCanvas.tsx
         └── …
 ```
@@ -142,7 +153,7 @@ This map reflects the code as of the last update — always check the actual rep
 
 **Validators** (`src/domain/validators.ts`): pure entity validators shared by adapters and F3 persistence saves.
 
-**Deferred from F2:** Zustand still uses legacy `GameState` only. UI wiring of domain types is F4+.
+**UI wiring:** F4 catalogs use domain types through repositories. Zustand still uses legacy `GameState`; F5 will persist selected-map edits.
 
 ---
 
@@ -163,7 +174,24 @@ This map reflects the code as of the last update — always check the actual rep
 
 **Rules:** `list`/`get` return deep clones; `save` clones input, validates, sets `updatedAt`; missing `get` → `null`; no cascading deletes (deleting a template never deletes sessions).
 
-**Not wired:** app startup, catalogs, editor autosave, Continue Game, New Game, Active Game. Legacy v1 JSON export/import remains the only user-facing persistence path.
+**Catalog wiring (F4):** library pages open persistence lazily via `getCatalogPersistence({ seed: true })` when catalogs mount — not on every render and not on unrelated routes. Rules presets remain seeded but have no F4 UI.
+
+---
+
+## 3.3. Content catalogs (F4)
+
+| Item | Behavior |
+|---|---|
+| Pages | `/library/maps`, `/library/civilizations` via `useMapsCatalog` / `useCivilizationsCatalog` |
+| Create map | Blank all-ocean `MapTemplate` (dimensions clamped 16–250×135); not procedural |
+| Map readiness | Temporary heuristic: Blank / Draft (land, no cities) / Ready (≥1 city) |
+| Map JSON import | Legacy **v1** file → new catalog map; **ignores** `civilizations` and `settings` (noted in UI) |
+| Map JSON export | **v1-compatible** JSON (`version`, `mapWidth`, `mapHeight`, `tiles`, `cities`) — catalog metadata omitted |
+| Editor bridge | `loadMapTemplateIntoEditor` → Zustand `loadCatalogMapBridge` + `sessionStorage` meta; route stays `/library/maps/current/edit` |
+| Save-back | **None** until F5 — editor changes do not update the selected catalog map |
+| Verification | `npm run verify:catalogs` |
+
+Legacy editor Load/Export Map buttons are unchanged and independent of the catalog import/export actions.
 
 ---
 

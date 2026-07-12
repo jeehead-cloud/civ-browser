@@ -17,7 +17,7 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F3 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), and IndexedDB repositories (F3). The live Zustand store and v1 JSON I/O are unchanged; catalogs / New Game / Active Game are still placeholders (F4+).
+**F1–F4 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), and repository-backed Maps/Civilizations catalogs (F4). The live World Editor remains on legacy Zustand at `/library/maps/current/edit` with a temporary catalog→editor bridge (no write-back). Settings / New Game / Active Game are still placeholders (F5+).
 
 There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
 
@@ -28,22 +28,21 @@ There is no human-controlled civilization and no units/combat/AI yet — those r
 ### F1 — Application Shell and Routing (Done)
 
 Implemented:
-- React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations placeholders, Settings & Balance placeholder, New Game placeholder, Active Game placeholder (`/games/:gameId` shows route id only), and not-found.
-- Existing editor UI mounted at `/library/maps/current/edit` (temporary path until map catalog / F5).
-- `AppShell` for non-editor screens; editor uses full viewport with a slim Main Menu link strip.
+- React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations catalogs, Settings & Balance placeholder, New Game placeholder, Active Game placeholder (`/games/:gameId` shows route id only), and not-found.
+- Existing editor UI mounted at `/library/maps/current/edit` (temporary path until F5 selected-map route).
+- `AppShell` for non-editor screens; editor uses full viewport with a slim chrome strip.
 
 ### D1 — Design System Foundation (Done — supporting task)
 
 Implemented:
 - Stable docs: `docs/design/DESIGN_SYSTEM.md`, `docs/design/UI_SCREEN_MAP.md`.
 - Tokens: `src/design-system/tokens.css`; primitive styles: `src/design-system/components.css`.
-- UI primitives under `src/components/ui/`: Button, IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState.
-- AppShell and all non-editor routes restyled to Atlas (dark graphite + gold); placeholders clearly marked.
-- World Editor tools/panels/canvas/gameplay unchanged; only slim chrome + local light isolation for editor chrome.
+- UI primitives under `src/components/ui/`: Button, IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog, ConfirmDialog, FormField.
+- AppShell and non-editor routes use Atlas (dark graphite + gold).
+- World Editor tools/panels/canvas/gameplay unchanged; slim chrome + local light isolation for editor chrome.
 
 Not done in D1 (deferred):
 - Full World Editor redesign → **F6**.
-- Real catalog/settings/new-game/active-game behavior → F4–F10.
 - Lucide icon pack / logo assets (no production assets copied yet; `src/assets/design-system/` reserved).
 
 ### F2 — Domain Model Separation (Done)
@@ -54,7 +53,7 @@ Implemented:
 - Focused verification: `npm run verify:domain`.
 
 Still legacy (intentionally):
-- Zustand `GameState` / editor / turn engine / v1 JSON import-export unchanged.
+- Zustand `GameState` / editor / turn engine / v1 JSON import-export in the editor toolbar unchanged.
 
 ### F3 — Persistence Abstraction (Done)
 
@@ -65,12 +64,24 @@ Implemented:
 - Idempotent seed: Standard rules preset (`rules-standard`) only.
 - Verification: `npm run verify:persistence` (fake-indexeddb, isolated DB).
 
-Not wired (intentionally):
-- No UI/catalog/editor/Continue Game integration; no app-startup open/seed; Zustand and v1 JSON unchanged.
+### F4 — Game Content Library (Done)
 
-### F4–F12 — Not started
+Implemented:
+- `/library` entry to Maps and Civilizations (other categories planned-only).
+- Maps catalog (`/library/maps`): list/search, create blank ocean map, duplicate, delete (confirm), v1 JSON import/export, Open → temporary editor bridge.
+- Civilizations catalog (`/library/civilizations`): list/search, create/edit, duplicate, delete (confirm).
+- Catalog layer `src/catalog/` (factories, JSON conversion, hooks, lazy `getCatalogPersistence`); React pages do not call Dexie directly.
+- Temporary readiness badges: Blank / Draft / Ready (heuristic only).
+- Editor banner when a catalog map is loaded; edits stay in legacy memory/JSON until F5.
+- Verification: `npm run verify:catalogs`.
 
-Next: **F4 Content Library** (catalogs reading repositories). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Not done (intentionally → F5+):
+- `/library/maps/:mapId/edit` and saving editor changes back to `MapRepository`.
+- Rules presets UI, game-session management, Continue Game.
+
+### F5–F12 — Not started
+
+Next: **F5 World Editor Migration** (selected-map route + catalog write-back). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -101,7 +112,7 @@ Implemented:
 - Procedural random map generator: organic coastlines + extra islands, mountain ranges (with occasional width, and a connectivity-repair pass so ranges can't fully wall off part of a continent), "great desert" blobs capped per-landmass, rivers (major + minor, via 0-1 BFS from elevation down to the sea), lakes, latitude-based biome/vegetation, clustered single-roll resource placement.
   - **Known accepted limitation**: procedural generation is good for "give me a random world" but is not a recognizable Earth.
 - Earth-like map mode (`generateEarthLikeMap` + `earthTemplate.ts`, toolbar **«Создать Землю»**): fraction-box continents (oversized Europe; Britain and Japan as separate island boxes), forced land bridges (Anatolia, Sinai), carved straits (Gibraltar, Bosphorus, Gulf of Aden/Red Sea), landmark mountains (Himalayas/Andes/Alps/Rockies — land-only), soft-edged Sahara override, named rivers (Nile/Amazon/Mississippi), named lakes (Baikal/Victoria), regional resource bias. Regenerable in-app; results vary by seed.
-- Save/load JSON includes tiles, cities, civilizations, and settings (older saves without cities still load; cities default to `[]`).
+- Save/load JSON includes tiles, cities, civilizations, and settings (older saves without cities still load; cities default to `[]`). Catalog import/export is separate (F4) and does not replace toolbar Load/Export.
 
 Not yet done:
 - No script to auto-place cities on a generated/loaded map (mentioned as a "later" idea by the owner, not started).
@@ -113,6 +124,7 @@ Implemented:
 - `CivilizationsPanel`: create a civilization (name, culture flavor name, flag emoji picker, auto-assigned color), list existing civilizations, assign/change a capital by clicking a city on the map, delete a civilization (releases its cities back to unclaimed).
 - Civilization flag renders next to any owned city on the map.
 - `SettingsPanel`: edit `baseGrowthRate`, `capitalCulturePerTurn`, `cultureAnnexThreshold`.
+- Separate reusable civilization **templates** live in the F4 catalog (independent of the editor panel list).
 
 Not yet done:
 - Flags are emoji only — real icon/image support is an explicitly deferred future upgrade (noted in `PROJECT.md`).
@@ -157,17 +169,17 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 - Procedural map generation is accepted as imperfect (see M2 above) — don't assume it will produce a recognizable or always-connected world.
 - Earth-like generation is regenerable but stylized and seed-dependent; forced bridges/straits improve Eurasia–Africa connectivity but do not guarantee Civ5-level geography.
-- No automated test suite exists. Verification has so far relied on manual browser checks plus, for generation/algorithm work, throwaway Node scripts that check connectivity or other numeric invariants (see `ARCHITECTURE.md` §7 for the specific historical bugs this caught).
+- Focused verification scripts exist for domain/persistence/catalogs (`verify:domain`, `verify:persistence`, `verify:catalogs`); there is still no large end-to-end UI test framework.
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
-- Continue Game / New Game / Active Game / catalog screens are placeholders until F3–F10.
-- World Editor path `/library/maps/current/edit` is temporary until maps are real catalog items (F4/F5).
+- Settings / New Game / Active Game / Continue Game remain placeholders until F8–F10.
+- World Editor path `/library/maps/current/edit` is temporary until F5 selected-map persistence; catalog Open is a one-way bridge into legacy memory.
 
 ---
 
 ## 5. Nearest Next Steps
 
-1. **F4 — Content Library** (Maps / Civilizations catalogs using F3 repositories).
-2. Then F5 editor migration; World Editor visual redesign remains **F6**; M5 event log remains open on the gameplay side but foundation structure is the priority.
+1. **F5 — World Editor Migration** (`/library/maps/:mapId/edit` + saving edits back to `MapRepository`).
+2. Then F6 editor redesign; F8 rules presets; F9 New Game; M5 event log remains open on the gameplay side.
 
 ---
 
@@ -198,6 +210,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F4 Game Content Library
+
+- Classification: Significant
+- Summary: Repository-backed Maps and Civilizations catalogs with create/duplicate/delete/search; map v1 JSON import/export; temporary catalog→current-editor bridge (no write-back); Atlas Dialog/ConfirmDialog/FormField; `npm run verify:catalogs`.
+- Files: `src/catalog/*`, `src/pages/{Maps,Civilizations,Library,WorldEditor}*`, `src/components/ui/{Dialog,ConfirmDialog,FormField}*`, `src/game/store.ts`, `src/design-system/components.css`, `package.json`, docs (`ARCHITECTURE`, `CURRENT_STATUS`, foundation plan, `PROJECT`, `PRODUCT_STRUCTURE`, UI screen map, design system)
+- Validation: `npm run build` PASS; `git diff --check` PASS; `verify:domain` / `verify:persistence` / `verify:catalogs` PASS; manual browser catalog + editor regression PASS (preview `4178`); during verification fixed pre-existing intermittent boot crash in `mapGenerator` island `growBlob` (off-map land keys)
 
 ### 2026-07-12 — F3 Persistence Abstraction
 
@@ -232,7 +251,7 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 - Classification: Significant
 - Summary: Shipped the coherent MVP loop already present in the working tree: vegetation/river editor tools, city modal, Edit/View + tile info, Earth-like map generation (`earthTemplate` + `generateEarthLikeMap`), civilizations/capitals/settings panels, turn engine (growth/culture/annexation), players panel; save/load now persists cities and settings; removed temp diagnostics; reconciled docs to match the in-app Earth-like path (not a one-off JSON Earth).
 - Files: `src/App.tsx`, `src/components/*` (Toolbar, MapCanvas, CityModal, TileInfoPanel, CivilizationsPanel, SettingsPanel, PlayControlPanel, PlayersPanel), `src/game/{types,store,mapGenerator,earthTemplate}.ts`, `CURRENT_STATUS.md`, `ARCHITECTURE.md`, `PROJECT.md`
-- Validation: `npm run build` PASS; Earth-like numeric smoke via tsx NOT RUN (no local tsx; build covers typecheck)
+- Validation: `npm run build` PASS; `git diff --check` PASS; Earth-like numeric smoke via tsx NOT RUN (no local tsx; build covers typecheck)
 
 ### 2026-07-10 — Mandatory end-of-iteration documentation process
 
@@ -253,6 +272,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F4 Game Content Library
+
+- Area: Product / Architecture
+- Change: Maps and Civilizations catalogs are live against IndexedDB repositories, with v1 JSON import/export for maps and a temporary one-way bridge into the current World Editor. Selected-map editor persistence remains F5.
+- Reason: Makes reusable content browsable and durable in-browser without pretending the legacy editor already saves to a selected catalog id.
+- Source of truth: `ARCHITECTURE.md` §3.3, `src/catalog/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F4
 
 ### 2026-07-12 — F3 Persistence Abstraction
 

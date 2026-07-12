@@ -101,9 +101,9 @@ Atlas tokens did not publish a z-index scale. Production uses:
 
 Implemented under `src/components/ui/`:
 
-Button (primary/secondary/ghost/danger × sm/md/lg), IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState.
+Button (primary/secondary/ghost/danger × sm/md/lg), IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog (Esc to close), ConfirmDialog, FormField.
 
-States: hover, active/pressed (primary), disabled, focus-visible. Dialog/Toast/Tooltip deferred until a screen needs them.
+States: hover, active/pressed (primary), disabled, focus-visible. Toast/Tooltip deferred until a screen needs them.
 
 ---
 

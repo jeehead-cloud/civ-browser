@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F3 done; F4+ queued)
+**Status:** Active (F1–F4 done; F5+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -172,8 +172,8 @@ Names may change during implementation, but responsibilities must remain separat
 | D1 | Design System Foundation (supporting) | Atlas tokens, UI primitives, shell/non-editor restyle; editor preserved for F6 | **Done** |
 | F2 | Domain Model Separation | Reusable templates and active sessions become distinct | **Done** |
 | F3 | Persistence Abstraction | Local catalogs and game saves | **Done** |
-| F4 | Content Library | Maps and civilizations become reusable catalog items | Queued |
-| F5 | World Editor Migration | Existing editor moved into dedicated route | Queued |
+| F4 | Content Library | Maps and civilizations become reusable catalog items | **Done** |
+| F5 | World Editor Migration | Existing editor moved into dedicated selected-map route | Queued |
 | F6 | World Editor Restructure | New Civ V-like editor structure | Queued |
 | F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | Queued |
 | F8 | Rules Presets | Scalable settings and balance system | Queued |
@@ -462,6 +462,8 @@ IndexedDB, optionally through Dexie.
 
 # 8. F4 — Game Content Library
 
+**Status: Implemented** (repository-backed Maps + Civilizations catalogs; temporary editor bridge; no F5 `:mapId/edit`).
+
 ## Goal
 
 Create the reusable content catalog.
@@ -496,7 +498,7 @@ Actions:
 Actions:
 
 - create;
-- open;
+- edit;
 - duplicate;
 - delete;
 - search.
@@ -508,6 +510,15 @@ Actions:
 - confirmation for destructive actions;
 - empty states;
 - loading and error states.
+
+## Implementation notes / justified deviations
+
+- **Create Map** produces a deterministic blank all-ocean `MapTemplate` (not procedural generation).
+- **Open Map** navigates to `/library/maps/current/edit` after loading tiles/cities into legacy Zustand via `loadMapTemplateIntoEditor` (F4 temporary bridge). Edits are **not** saved back to the catalog until F5.
+- Map JSON import/export uses the existing **v1** editor file shape; civilizations/settings sections are ignored on import (with a success note) and omitted on export.
+- Persistence opens lazily when catalog screens mount (`getCatalogPersistence`); Standard rules seed may run; maps/civs are not auto-seeded.
+- Atlas additions: `Dialog`, `ConfirmDialog`, `FormField`.
+- Verification: `npm run verify:catalogs`.
 
 ## Acceptance Criteria
 

@@ -5,10 +5,10 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | Route | Screen | Source mockup / kit | Milestone | D1 status |
 |---|---|---|---|---|
 | `/` | Main Menu | Atlas shell + primary actions; `examples/Civ Browser.dc.html` | F1 / product main menu | **Styled shell** |
-| `/library` | Game Content Library | Library category list pattern | F4 (catalogs later) | **Styled placeholder** |
-| `/library/maps` | Maps Catalog | Scenario-editor kit density (list/card) | F4 | **Styled placeholder** |
-| `/library/civilizations` | Civilizations Catalog | Same | F4 | **Styled placeholder** |
-| `/library/maps/current/edit` | World Editor (MVP) | `ui_kits/scenario-editor` (reference only) | F1 bridge; **F6** redesign | **Preserved MVP** — chrome strip only |
+| `/library` | Game Content Library | Library category list pattern | F4 | **Working** (Maps + Civilizations entry) |
+| `/library/maps` | Maps Catalog | Scenario-editor kit density (list/card) | F4 | **Working catalog** |
+| `/library/civilizations` | Civilizations Catalog | Same | F4 | **Working catalog** |
+| `/library/maps/current/edit` | World Editor (MVP) | `ui_kits/scenario-editor` (reference only) | F4 bridge; **F6** redesign | **Preserved MVP** + catalog bridge banner |
 | `/library/maps/:mapId/edit` | Target World Editor | scenario-editor kit | F5 / F6 | Not routed yet |
 | `/settings` | Settings & Balance | Panel + category nav (future) | F8 | **Styled placeholder** |
 | `/games/new` | New Game | Wizard shell (future) | F9 | **Styled placeholder** |
@@ -33,19 +33,21 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ### Maps `/library/maps`
 
-- Empty catalog + link to current editor.
-- Deferred: CRUD, search, import/export catalog (F4).
+- Repository-backed catalog: search, create (blank ocean), import/export v1 JSON, duplicate, delete (confirm), open → temporary current editor bridge.
+- Components: PageHeader, Input, Button, Card, Badge, EmptyState, Dialog, ConfirmDialog, FormField.
+- Deferred: `/library/maps/:mapId/edit` persistence (F5); mini-map thumbnails.
 
 ### Civilizations `/library/civilizations`
 
-- Empty catalog + link to editor civ panel.
-- Deferred: template CRUD (F4).
+- Repository-backed catalog: search, create/edit, duplicate, delete (confirm).
+- Components: same Atlas set as Maps catalog.
+- Deferred: traits / bonuses / AI config.
 
 ### World Editor `/library/maps/current/edit`
 
-- Layout regions (target F6): top toolbar, tool rail, canvas, inspector — **not** implemented in D1.
+- Layout regions (target F6): top toolbar, tool rail, canvas, inspector — **not** implemented in D1/F4.
 - Current: Toolbar + MapCanvas + right panels + modals (unchanged).
-- Components used in D1: none of the new primitives inside editor panels.
+- F4: optional banner when a catalog map was loaded into legacy memory (no autosave to catalog).
 - Full redesign: **F6**.
 
 ### Settings `/settings`

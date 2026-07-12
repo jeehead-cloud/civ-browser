@@ -58,6 +58,14 @@ interface Store {
   endTurn: () => void
   exportMap: () => string
   importMap: (json: string) => { success: boolean; error?: string }
+  /** Temporary F4 bridge: load catalog map tiles/cities into legacy editor memory (no catalog write-back). */
+  loadCatalogMapBridge: (input: {
+    tiles: Record<string, Tile>
+    cities: City[]
+    catalogMapId: string
+    catalogMapName: string
+  }) => void
+  catalogBridge: { mapId: string; mapName: string } | null
 }
 
 export const useGameStore = create<Store>((set, get) => ({
@@ -106,6 +114,7 @@ export const useGameStore = create<Store>((set, get) => ({
   gamePhase: 'setup',
   currentYear: 0,
   yearsPerTurn: 10,
+  catalogBridge: null,
   paintAt: (centerKey) => {
     const { game, builder } = get()
     const centerTile = game.tiles[centerKey]
@@ -394,5 +403,24 @@ export const useGameStore = create<Store>((set, get) => ({
     } catch (e) {
       return { success: false, error: 'Не удалось разобрать JSON: файл повреждён или неверного формата.' }
     }
+  },
+  loadCatalogMapBridge: (input) => {
+    const { game } = get()
+    set({
+      game: {
+        ...game,
+        tiles: input.tiles,
+        cities: input.cities,
+        turn: 1,
+        units: [],
+      },
+      catalogBridge: { mapId: input.catalogMapId, mapName: input.catalogMapName },
+      gamePhase: 'setup',
+      viewMode: 'edit',
+      viewingTileKey: null,
+      addingCityAtKey: null,
+      assigningCapitalForCivId: null,
+      currentYear: 0,
+    })
   },
 }))

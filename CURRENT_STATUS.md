@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1 (Application Shell and Routing) is implemented.** **D1 (Design System Foundation) is implemented.** **F2 (Domain Model Separation) is implemented** as types + adapters only — the live Zustand store still uses legacy `src/game/types.ts`.
+**F1–F3 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), and IndexedDB repositories (F3). The live Zustand store and v1 JSON I/O are unchanged; catalogs / New Game / Active Game are still placeholders (F4+).
 
-IndexedDB, catalogs, and New Game wizard are not started (F3+). There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8), after the foundation batch.
+There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
 
 ---
 
@@ -50,16 +50,27 @@ Not done in D1 (deferred):
 
 Implemented:
 - Domain types under `src/domain/`: `MapTemplate`, `MapCityTemplate`, `CivilizationTemplate`, `CivilizationInstance`, `GameRulesPreset`, `GameRulesSnapshot`, `GameSession`, `GameCity`.
-- Adapters in `src/domain/adapters.ts` with `ConversionResult` and deep-clone boundaries.
-- Focused verification: `npx --yes tsx src/domain/verify.ts` (deep-copy + invariants + JSON serialization).
+- Adapters + shared validators (`src/domain/validators.ts`).
+- Focused verification: `npm run verify:domain`.
 
 Still legacy (intentionally):
-- Zustand `GameState` / editor / turn engine / v1 JSON import-export unchanged and not replaced by `GameSession`.
-- Domain layer not wired into UI or persistence.
+- Zustand `GameState` / editor / turn engine / v1 JSON import-export unchanged.
 
-### F3–F12 — Not started
+### F3 — Persistence Abstraction (Done)
 
-Next: **F3 Persistence Abstraction** (IndexedDB repositories). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- Dexie IndexedDB DB `civ-browser`, schema version 1, stores: `maps`, `civilizations`, `rulesPresets`, `gameSessions`.
+- Repository interfaces + implementations under `src/persistence/`.
+- `PersistenceError` typed errors; validate-before-save; deep-copy reads/writes.
+- Idempotent seed: Standard rules preset (`rules-standard`) only.
+- Verification: `npm run verify:persistence` (fake-indexeddb, isolated DB).
+
+Not wired (intentionally):
+- No UI/catalog/editor/Continue Game integration; no app-startup open/seed; Zustand and v1 JSON unchanged.
+
+### F4–F12 — Not started
+
+Next: **F4 Content Library** (catalogs reading repositories). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -155,8 +166,8 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 ## 5. Nearest Next Steps
 
-1. **F3 — Persistence Abstraction** (IndexedDB repositories over the F2 domain types).
-2. Then F4 Content Library / F5 editor migration; World Editor visual redesign remains **F6**; M5 event log remains open on the gameplay side but foundation structure is the priority.
+1. **F4 — Content Library** (Maps / Civilizations catalogs using F3 repositories).
+2. Then F5 editor migration; World Editor visual redesign remains **F6**; M5 event log remains open on the gameplay side but foundation structure is the priority.
 
 ---
 
@@ -187,6 +198,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F3 Persistence Abstraction
+
+- Classification: Significant
+- Summary: Added Dexie IndexedDB repositories for MapTemplate, CivilizationTemplate, GameRulesPreset, and GameSession; schema v1; Standard rules seed; typed errors; no UI wiring. Shared domain validators extracted for save-path reuse.
+- Files: `src/persistence/*`, `src/domain/validators.ts`, `src/domain/adapters.ts`, `src/domain/index.ts`, `package.json`, `ARCHITECTURE.md`, `CURRENT_STATUS.md`, `FOUNDATION_IMPLEMENTATION_PLAN.md`, `PROJECT.md`
+- Validation: `npm run build` PASS; `git diff --check` PASS; `npm run verify:domain` PASS; `npm run verify:persistence` PASS; manual editor regression recorded in completing agent response
 
 ### 2026-07-12 — F2 Domain Model Separation
 
@@ -235,6 +253,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F3 Persistence Abstraction
+
+- Area: Architecture
+- Change: Civ Browser now has an IndexedDB persistence layer (Dexie) behind repository interfaces for maps, civilizations, rules presets, and game sessions, with schema versioning and an idempotent Standard rules seed. UI and Zustand remain unwired; v1 JSON file exchange is unchanged.
+- Reason: Establishes local storage required by catalogs / New Game / Continue Game without coupling product screens to IndexedDB yet.
+- Source of truth: `ARCHITECTURE.md` §3.2, `src/persistence/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F3
 
 ### 2026-07-12 — F2 Domain Model Separation
 

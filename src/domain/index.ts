@@ -2,7 +2,7 @@
  * Domain layer (F2) — template vs session type boundaries and adapters.
  *
  * Runtime gameplay still uses legacy types in `src/game/types.ts` + Zustand.
- * Persistence (IndexedDB) is F3. Do not import this into UI until F3–F9 need it.
+ * Persistence lives in `src/persistence/` (F3) but is not wired into UI yet.
  */
 
 export type { ConversionResult } from './result'
@@ -36,6 +36,15 @@ export type {
   CivilizationInstanceSetup,
   LegacyToGameSessionInput,
 } from './adapters'
+
+export {
+  SUPPORTED_ENTITY_VERSION,
+  validateMapTemplate,
+  validateCivilizationTemplate,
+  validateGameRulesPreset,
+  validateGameSession,
+  validateRulesValues,
+} from './validators'
 
 export { runDomainVerification } from './verification'
 export type { DomainVerificationReport } from './verification'

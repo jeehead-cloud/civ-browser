@@ -100,7 +100,7 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F1 | Application Shell and Routing | Done |
 | D1 | Design System Foundation (supporting) | Done |
 | F2 | Domain Model Separation | Done |
-| F3 | Persistence Abstraction | Queued |
+| F3 | Persistence Abstraction | Done |
 | F4–F12 | Library, editor migration, presets, new game, active game, … | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
@@ -148,7 +148,9 @@ Era/tech gating, diplomacy, and multiplayer are deliberately deferred — they a
 - React Router (application navigation)
 - HTML5 Canvas 2D (hex map rendering — chosen over PixiJS/Phaser for simplicity, since there's no physics or heavy sprite animation)
 - Zustand (state management)
-- No backend, no database — the entire game state lives in the browser; persistence is a manual JSON export/import (IndexedDB planned in foundation F3)
+- Dexie / IndexedDB (`src/persistence/`) for domain catalogs and sessions — not UI-wired yet (F3)
+- Manual v1 JSON export/import remains the editor file exchange path
+- No backend / accounts — fully client-side
 
 ### Hosting / Deployment
 

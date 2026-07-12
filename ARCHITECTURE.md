@@ -20,13 +20,14 @@
 | Routing | React Router (`react-router-dom`) | Client-side routes; editor is a dedicated full-viewport route |
 | Design system | Atlas (Claude-generated) → production tokens/CSS | Source/reference: `Design System/`; runtime: `src/design-system/` + `src/components/ui/` |
 | Map rendering | HTML5 Canvas 2D (raw `CanvasRenderingContext2D`) | Chosen over PixiJS/Phaser: no physics, no heavy sprite animation, and raw canvas keeps the rendering code simple and fully under the owner's control |
-| State management | Zustand | Single store in `src/game/store.ts` (legacy runtime; domain migration deferred past F2) |
+| State management | Zustand | Single store in `src/game/store.ts` (legacy runtime; domain migration deferred) |
 | Domain model (F2) | `src/domain/` | Template vs session TypeScript types + adapters; not wired into Zustand yet |
-| Backend | **None** | Fully client-side; no server, no database, no accounts |
-| Persistence | Manual JSON export/import (download/upload a `.json` file) | IndexedDB planned in **F3** — see `FOUNDATION_IMPLEMENTATION_PLAN.md` |
+| Local persistence (F3) | IndexedDB via Dexie (`src/persistence/`) | Repository interfaces; UI wiring deferred to F4+ |
+| Backend | **None** | Fully client-side; no server, no accounts |
+| File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Every piece of game state (map tiles, cities, civilizations, turn/year) lives in memory in the browser and is only persisted when the owner explicitly exports it to a JSON file.
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. Separately, F3 provides IndexedDB repositories for domain entities (maps, civilizations, rules presets, game sessions) that catalogs and New Game will use later — those repositories are **not** wired into the UI yet.
 
 ---
 
@@ -87,16 +88,26 @@ civ-browser/
     ├── assets/design-system/      — reserved for extracted production assets
     ├── styles/index.css
     ├── pages/
-    ├── domain/                    — F2 template/session types + adapters (not runtime yet)
+    ├── domain/                    — F2 template/session types + adapters (+ validators)
     │   ├── maps.ts
     │   ├── civilizations.ts
     │   ├── rules.ts
     │   ├── gameSession.ts
     │   ├── adapters.ts
+    │   ├── validators.ts
     │   ├── verification.ts
-    │   ├── verify.ts              — run: npx --yes tsx src/domain/verify.ts
+    │   ├── verify.ts              — npm run verify:domain
     │   └── index.ts
-    ├── game/                      — legacy runtime types + Zustand store (unchanged in F2)
+    ├── persistence/               — F3 IndexedDB (Dexie) repositories; not UI-wired
+    │   ├── database.ts
+    │   ├── schema.ts
+    │   ├── errors.ts
+    │   ├── seed.ts
+    │   ├── repositories/
+    │   ├── verification.ts
+    │   ├── verify.ts              — npm run verify:persistence
+    │   └── index.ts
+    ├── game/                      — legacy runtime types + Zustand store
     └── components/
         ├── AppShell.tsx
         ├── ui/                    — Button, Card, Panel, Badge, Input, Tabs, headers, EmptyState
@@ -129,7 +140,30 @@ This map reflects the code as of the last update — always check the actual rep
 
 **Adapters** (`src/domain/adapters.ts`): convert legacy `GameState` / `City` / `Civilization` / `GameSettings` into domain entities with `ConversionResult`, deep-cloning nested data via `structuredClone`. Session creation must not share mutable references with templates or presets.
 
-**Deferred:** Zustand still uses legacy `GameState` only — no store migration in F2. Persistence repositories are **F3**. Domain adapters are not wired into UI or JSON export yet; v1 map JSON schema is unchanged.
+**Validators** (`src/domain/validators.ts`): pure entity validators shared by adapters and F3 persistence saves.
+
+**Deferred from F2:** Zustand still uses legacy `GameState` only. UI wiring of domain types is F4+.
+
+---
+
+## 3.2. Persistence layer (F3)
+
+| Item | Value |
+|---|---|
+| Technology | IndexedDB via **Dexie** |
+| Production DB name | `civ-browser` |
+| Schema version | `1` (`DATABASE_SCHEMA_VERSION`) — independent of domain entity `version` |
+| Object stores | `maps`, `civilizations`, `rulesPresets`, `gameSessions` |
+| Primary key | entity `id` |
+| Indexes | `updatedAt`, `name` on each store |
+| Access | `MapRepository`, `CivilizationRepository`, `RulesPresetRepository`, `GameSessionRepository` via `createPersistenceServices` / `createPersistence` |
+| Errors | `PersistenceError` with codes: `database_open`, `validation`, `serialization`, `write`, `read`, `migration` |
+| Seed | Idempotent `Standard` rules preset only (`rules-standard`); no default maps/civs/sessions |
+| Verification | `npm run verify:persistence` (uses `fake-indexeddb` + isolated DB name) |
+
+**Rules:** `list`/`get` return deep clones; `save` clones input, validates, sets `updatedAt`; missing `get` → `null`; no cascading deletes (deleting a template never deletes sessions).
+
+**Not wired:** app startup, catalogs, editor autosave, Continue Game, New Game, Active Game. Legacy v1 JSON export/import remains the only user-facing persistence path.
 
 ---
 

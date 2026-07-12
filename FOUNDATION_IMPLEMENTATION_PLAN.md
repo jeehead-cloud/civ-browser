@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F2 done; F3+ queued)
+**Status:** Active (F1–F3 done; F4+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -171,7 +171,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F1 | Application Shell and Routing | Separate screens and stable navigation | **Done** |
 | D1 | Design System Foundation (supporting) | Atlas tokens, UI primitives, shell/non-editor restyle; editor preserved for F6 | **Done** |
 | F2 | Domain Model Separation | Reusable templates and active sessions become distinct | **Done** |
-| F3 | Persistence Abstraction | Local catalogs and game saves | Queued |
+| F3 | Persistence Abstraction | Local catalogs and game saves | **Done** |
 | F4 | Content Library | Maps and civilizations become reusable catalog items | Queued |
 | F5 | World Editor Migration | Existing editor moved into dedicated route | Queued |
 | F6 | World Editor Restructure | New Civ V-like editor structure | Queued |
@@ -380,6 +380,8 @@ Contains:
 
 # 7. F3 — Persistence Abstraction
 
+**Status: Implemented** (repositories + IndexedDB only; UI wiring deferred to F4+).
+
 ## Goal
 
 Add local persistence without coupling UI to IndexedDB.
@@ -430,6 +432,16 @@ IndexedDB, optionally through Dexie.
 - seed/default data;
 - error handling;
 - lightweight migration support.
+
+## Implemented notes / deviations
+
+- **Dexie** used as the IndexedDB wrapper (no prior persistence library).
+- Production database name: `civ-browser`; schema version `1`.
+- Stores: `maps`, `civilizations`, `rulesPresets`, `gameSessions` with indexes `updatedAt`, `name`.
+- Seed policy: only the **Standard** rules preset (`rules-standard`); maps/civilizations/sessions not seeded (avoids writing a 250×135 map by default).
+- Shared validators live in `src/domain/validators.ts`.
+- Verification: `npm run verify:persistence` with `fake-indexeddb` (isolated DB name).
+- No app-startup open/seed; no UI wiring; v1 JSON file I/O unchanged.
 
 ## Acceptance Criteria
 

@@ -1,10 +1,15 @@
 import type { City, Civilization, GameSettings, GameState, Tile } from '../game/types'
-import { tileKey } from '../game/hexGrid'
 import type { CivilizationInstance, CivilizationTemplate } from './civilizations'
 import type { GameCity, GameSession } from './gameSession'
 import type { MapCityTemplate, MapTemplate } from './maps'
 import type { GameRulesPreset, GameRulesSnapshot, GameRulesValues } from './rules'
 import { fail, ok, type ConversionResult } from './result'
+import {
+  cityCoordOnMap,
+  isFiniteNumber,
+  validateRulesValues,
+  validateUniqueIds,
+} from './validators'
 
 function isoNow(): string {
   return new Date().toISOString()
@@ -21,42 +26,6 @@ export function cloneTiles(tiles: Record<string, Tile>): Record<string, Tile> {
 
 export function cloneRulesValues(settings: GameRulesValues): GameRulesValues {
   return deepClone(settings)
-}
-
-function isFiniteNumber(n: unknown): n is number {
-  return typeof n === 'number' && Number.isFinite(n)
-}
-
-function validateRulesValues(settings: GameRulesValues, label: string): string[] {
-  const errors: string[] = []
-  if (!isFiniteNumber(settings.baseGrowthRate) || settings.baseGrowthRate < 0) {
-    errors.push(`${label}.baseGrowthRate must be a finite number ≥ 0`)
-  }
-  if (!isFiniteNumber(settings.capitalCulturePerTurn) || settings.capitalCulturePerTurn < 0) {
-    errors.push(`${label}.capitalCulturePerTurn must be a finite number ≥ 0`)
-  }
-  if (!isFiniteNumber(settings.cultureAnnexThreshold) || settings.cultureAnnexThreshold <= 0) {
-    errors.push(`${label}.cultureAnnexThreshold must be a finite number > 0`)
-  }
-  return errors
-}
-
-function validateUniqueIds(ids: string[], label: string): string[] {
-  const seen = new Set<string>()
-  const errors: string[] = []
-  for (const id of ids) {
-    if (!id) {
-      errors.push(`${label} contains an empty id`)
-      continue
-    }
-    if (seen.has(id)) errors.push(`${label} duplicate id: ${id}`)
-    seen.add(id)
-  }
-  return errors
-}
-
-function cityCoordOnMap(tiles: Record<string, Tile>, coord: { q: number; r: number }): boolean {
-  return tiles[tileKey(coord)] != null
 }
 
 // ---- Map / city templates ----

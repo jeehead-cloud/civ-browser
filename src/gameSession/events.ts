@@ -21,6 +21,7 @@ const KNOWN_TYPES = new Set<GameSessionEventType>([
   'culture_generated',
   'annexation',
   'turn_completed',
+  'debug_edit_saved',
 ])
 
 function iconFor(type: string): string {
@@ -28,6 +29,7 @@ function iconFor(type: string): string {
   if (type === 'growth_summary') return '📈'
   if (type === 'culture_generated') return '🎭'
   if (type === 'turn_completed') return '⏭'
+  if (type === 'debug_edit_saved') return '🛠'
   return '•'
 }
 

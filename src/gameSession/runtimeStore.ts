@@ -1,8 +1,18 @@
 import { create } from 'zustand'
-import type { AxialCoord } from '../game/types'
+import type { AxialCoord, ResourceType, TerrainType, VegetationType } from '../game/types'
+import { isoNow } from '../catalog/mapFactory'
+import type { GameSessionEvent } from '../domain/gameSession'
 import { applyTurn, isAtMaximumTurns } from './turnEngine'
-import { emptyRuntimeState, hydrateRuntimeFromSession } from './runtimeAdapters'
+import { emptyDebugState, emptyRuntimeState, hydrateRuntimeFromSession } from './runtimeAdapters'
 import { loadGameSession, saveGameSessionFromRuntime } from './sessionService'
+import { isDebugEditingAvailable } from './debugAvailability'
+import {
+  applyDebugEdit,
+  type DebugEditRequest,
+  type DebugInteractionMode,
+  type DebugTool,
+  type DebugToolSettings,
+} from './debugOps'
 import type { ActivePanelTab, ActiveRuntimeState } from './types'
 
 interface ActiveGameStore extends ActiveRuntimeState {
@@ -14,6 +24,17 @@ interface ActiveGameStore extends ActiveRuntimeState {
   endTurn: () => Promise<void>
   save: () => Promise<boolean>
   clearRuntimeError: () => void
+  /** Confirm-gated enable — caller must show dialog first. */
+  enableDebugEditing: () => { ok: boolean; error?: string }
+  disableDebugEditing: () => void
+  setDebugInteractionMode: (mode: DebugInteractionMode) => void
+  setDebugTool: (tool: DebugTool) => void
+  setDebugTerrain: (terrain: TerrainType) => void
+  setDebugFeature: (feature: VegetationType) => void
+  setDebugResource: (resource: ResourceType) => void
+  setDebugElevationAction: (action: DebugToolSettings['elevationAction']) => void
+  applyDebugEditAt: (tileKey: string, riverEdgeIndex?: number) => { ok: boolean; error?: string }
+  clearDebugEditMessage: () => void
 }
 
 let turnInFlight = false
@@ -21,6 +42,21 @@ let turnInFlight = false
 /** Test helper */
 export function resetActiveGameTurnGuard(): void {
   turnInFlight = false
+}
+
+function makeDebugSaveEvent(
+  state: ActiveRuntimeState,
+  changedTileCount: number,
+): GameSessionEvent {
+  return {
+    id: `evt-debug-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+    turn: state.turn,
+    year: state.currentYear,
+    type: 'debug_edit_saved',
+    message: `Debug edit saved (${changedTileCount} tile${changedTileCount === 1 ? '' : 's'} changed)`,
+    data: { changedTileCount, system: true, debug: true },
+    createdAt: isoNow(),
+  }
 }
 
 export const useActiveGameStore = create<ActiveGameStore>((set, get) => ({
@@ -31,7 +67,7 @@ export const useActiveGameStore = create<ActiveGameStore>((set, get) => ({
     set(emptyRuntimeState())
   },
 
-  loadSession: async (gameId: string) => {
+  loadSession: async (gameId) => {
     set({
       ...emptyRuntimeState(),
       loadStatus: 'loading',
@@ -63,13 +99,143 @@ export const useActiveGameStore = create<ActiveGameStore>((set, get) => ({
 
   clearRuntimeError: () => set({ runtimeError: null }),
 
+  clearDebugEditMessage: () =>
+    set((s) => ({
+      debug: { ...s.debug, lastEditMessage: null },
+    })),
+
+  enableDebugEditing: () => {
+    if (!isDebugEditingAvailable()) {
+      return { ok: false, error: 'Debug editing is not available in this build' }
+    }
+    if (get().loadStatus !== 'ready') {
+      return { ok: false, error: 'Session is not ready' }
+    }
+    set((s) => ({
+      debug: {
+        ...s.debug,
+        enabled: true,
+        interactionMode: 'inspect',
+        lastEditMessage: null,
+      },
+    }))
+    return { ok: true }
+  },
+
+  disableDebugEditing: () =>
+    set((s) => ({
+      debug: {
+        ...s.debug,
+        enabled: false,
+        interactionMode: 'inspect',
+        lastEditMessage: null,
+      },
+      // Do not discard edits — only leave edit mode
+    })),
+
+  setDebugInteractionMode: (mode) => {
+    if (!get().debug.enabled) return
+    set((s) => ({
+      debug: { ...s.debug, interactionMode: mode },
+      // Leaving Edit closes selection paint context; Inspect restores popups
+      selectedTileKey: mode === 'edit' ? null : s.selectedTileKey,
+    }))
+  },
+
+  setDebugTool: (tool) => {
+    if (!get().debug.enabled) return
+    set((s) => ({ debug: { ...s.debug, tool } }))
+  },
+
+  setDebugTerrain: (terrain) => {
+    if (!get().debug.enabled) return
+    set((s) => ({
+      debug: { ...s.debug, settings: { ...s.debug.settings, terrain }, tool: 'terrain' },
+    }))
+  },
+
+  setDebugFeature: (feature) => {
+    if (!get().debug.enabled) return
+    set((s) => ({
+      debug: { ...s.debug, settings: { ...s.debug.settings, feature }, tool: 'features' },
+    }))
+  },
+
+  setDebugResource: (resource) => {
+    if (!get().debug.enabled) return
+    set((s) => ({
+      debug: { ...s.debug, settings: { ...s.debug.settings, resource }, tool: 'resources' },
+    }))
+  },
+
+  setDebugElevationAction: (action) => {
+    if (!get().debug.enabled) return
+    set((s) => ({
+      debug: { ...s.debug, settings: { ...s.debug.settings, elevationAction: action } },
+    }))
+  },
+
+  applyDebugEditAt: (tileKey, riverEdgeIndex) => {
+    const state = get()
+    if (!isDebugEditingAvailable() || !state.debug.enabled) {
+      return { ok: false, error: 'Debug editing is not enabled' }
+    }
+    if (state.debug.interactionMode !== 'edit') {
+      return { ok: false, error: 'Switch to Edit mode to paint' }
+    }
+    if (state.loadStatus !== 'ready') {
+      return { ok: false, error: 'Session is not ready' }
+    }
+
+    const request: DebugEditRequest = {
+      tool: state.debug.tool,
+      tileKey,
+      settings: state.debug.settings,
+      riverEdgeIndex,
+    }
+    const result = applyDebugEdit(state.tiles, request)
+    if (!result.ok || !result.tiles) {
+      const msg = result.message ?? result.error ?? 'Edit failed'
+      set((s) => ({
+        debug: { ...s.debug, lastEditMessage: msg },
+      }))
+      return { ok: false, error: msg }
+    }
+
+    const delta = result.changedKeys?.length ?? 0
+    set({
+      tiles: result.tiles,
+      dirty: true,
+      selectedTileKey: null,
+      debug: {
+        ...state.debug,
+        pendingChangedTileCount: state.debug.pendingChangedTileCount + delta,
+        lastEditMessage: null,
+      },
+      saveStatus: state.saveStatus === 'saving' ? 'saving' : 'idle',
+    })
+    return { ok: true }
+  },
+
   save: async () => {
     const state = get()
     if (!state.sessionId || state.loadStatus !== 'ready') return false
-    set({ saveStatus: 'saving', saveError: null })
+
+    const pendingDebug = state.debug.pendingChangedTileCount
+    const eventsForSave =
+      pendingDebug > 0
+        ? [...state.events, makeDebugSaveEvent(state, pendingDebug)]
+        : state.events
+
+    set({ saveStatus: 'saving', saveError: null, events: eventsForSave })
     const result = await saveGameSessionFromRuntime(get())
     if (!result.ok) {
-      set({ saveStatus: 'error', saveError: result.error })
+      // Roll back ephemeral debug event so retry does not duplicate
+      set({
+        saveStatus: 'error',
+        saveError: result.error,
+        events: state.events,
+      })
       return false
     }
     set({
@@ -78,7 +244,12 @@ export const useActiveGameStore = create<ActiveGameStore>((set, get) => ({
       updatedAt: result.session.updatedAt,
       dirty: false,
       saveError: null,
-      events: result.session.events ?? get().events,
+      events: result.session.events ?? eventsForSave,
+      debug: {
+        ...get().debug,
+        pendingChangedTileCount: 0,
+        lastEditMessage: null,
+      },
     })
     return true
   },
@@ -95,13 +266,26 @@ export const useActiveGameStore = create<ActiveGameStore>((set, get) => ({
     turnInFlight = true
     set({ turnBusy: true, runtimeError: null })
     try {
+      // Policy: persist unsaved runtime (including debug edits) before turn.
+      if (state.dirty) {
+        const preSaved = await get().save()
+        if (!preSaved) {
+          set({
+            turnBusy: false,
+            runtimeError: 'Save failed — fix save error before Next Turn',
+          })
+          return
+        }
+      }
+
+      const current = get()
       const outcome = applyTurn({
-        cities: state.cities,
-        settings: state.rules.settings,
-        turn: state.turn,
-        currentYear: state.currentYear,
-        yearsPerTurn: state.yearsPerTurn,
-        maximumTurns: state.maximumTurns,
+        cities: current.cities,
+        settings: current.rules!.settings,
+        turn: current.turn,
+        currentYear: current.currentYear,
+        yearsPerTurn: current.yearsPerTurn,
+        maximumTurns: current.maximumTurns,
       })
       if (!outcome.ok) {
         set({ runtimeError: outcome.error, turnBusy: false })
@@ -112,17 +296,15 @@ export const useActiveGameStore = create<ActiveGameStore>((set, get) => ({
         cities: outcome.value.cities,
         turn: outcome.value.turn,
         currentYear: outcome.value.currentYear,
-        events: [...state.events, ...outcome.value.events],
+        events: [...get().events, ...outcome.value.events],
         dirty: true,
         turnBusy: false,
         saveStatus: 'saving',
         saveError: null,
       })
 
-      // Autosave after successful turn — do not re-run turn on save failure
       const saved = await get().save()
       if (!saved) {
-        // Runtime already advanced; leave dirty + error for Retry Save
         set({ dirty: true })
       }
     } catch (err) {

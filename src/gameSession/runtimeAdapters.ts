@@ -1,6 +1,18 @@
 import { deepClone } from '../domain/adapters'
 import type { GameSession } from '../domain/gameSession'
-import type { ActiveRuntimeState } from './types'
+import { DEFAULT_DEBUG_TOOL_SETTINGS } from './debugOps'
+import type { ActiveDebugState, ActiveRuntimeState } from './types'
+
+export function emptyDebugState(): ActiveDebugState {
+  return {
+    enabled: false,
+    interactionMode: 'inspect',
+    tool: 'terrain',
+    settings: { ...DEFAULT_DEBUG_TOOL_SETTINGS },
+    pendingChangedTileCount: 0,
+    lastEditMessage: null,
+  }
+}
 
 export function emptyRuntimeState(): ActiveRuntimeState {
   return {
@@ -32,6 +44,7 @@ export function emptyRuntimeState(): ActiveRuntimeState {
     turnBusy: false,
     runtimeError: null,
     dirty: false,
+    debug: emptyDebugState(),
   }
 }
 
@@ -66,5 +79,7 @@ export function hydrateRuntimeFromSession(session: GameSession): Partial<ActiveR
     turnBusy: false,
     runtimeError: null,
     dirty: false,
+    /** Always disabled on load/rehydrate — never persisted. */
+    debug: emptyDebugState(),
   }
 }

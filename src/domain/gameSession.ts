@@ -33,6 +33,7 @@ export type GameSessionEventType =
   | 'culture_generated'
   | 'annexation'
   | 'turn_completed'
+  | 'debug_edit_saved'
 
 export interface GameSessionEvent {
   id: string

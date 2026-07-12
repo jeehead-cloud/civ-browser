@@ -131,7 +131,8 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 
 - **Edit mode**: clicking a hex paints according to the active World Builder tool (terrain, resource, hills, vegetation, river, or city). This is the only mode where the World Builder toolbar controls are shown.
 - **View mode**: clicking a hex opens an info popup (`TileInfoPanel`) showing terrain/vegetation/hills/resource/river state, and — if the tile has a city — the city's name, population, owning civilization, culture output (if capital), and total growth rate. No painting happens in View mode.
-- Active Game (F10/F11) is always view-only on the session map: clicks open tile/city context popups, never paint. Selection is runtime-only and does not dirty or save the session.
+- Active Game (F10/F11) is always view-only on the session map by default: clicks open tile/city context popups, never paint. Selection is runtime-only and does not dirty or save the session.
+- **F12 Debug Mode** (development builds only): after explicit confirmation, Edit sub-mode may paint the **current GameSession** copy. Source MapTemplate / civilization templates / rules presets are never mutated. Disabling Debug Mode does not revert edits. Edits persist only via Save Game (or Next Turn, which saves dirty runtime first).
 - Starting a legacy Sim game (pressing "Играть") force-switches to View mode. The owner can still manually flip back to Edit mode from the toolbar even during Play phase — this is intentional for the Sim only.
 
 ---
@@ -211,6 +212,7 @@ The following are intentionally **not** implemented yet, and no feature should a
 - Growth bonuses derived from terrain, resources, or buildings (only a manually-set flat per-city bonus exists today).
 - Wiring informational tile yields into growth or city working (F11 yields are display-only).
 - Buildings, characters, real Build/Actions, beauty as a stored yield.
+- Production debug tools for public users (F12 Debug Mode is development-only).
 - Any server-side validation or persistence — see `DEPLOYMENT.md`.
 
 ---

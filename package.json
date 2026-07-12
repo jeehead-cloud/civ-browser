@@ -16,7 +16,8 @@
     "verify:rules-presets": "tsx src/rules/verify.ts",
     "verify:new-game": "tsx src/newGame/verify.ts",
     "verify:active-game": "tsx src/gameSession/verify.ts",
-    "verify:active-context": "tsx src/gameSession/verifyContext.ts"
+    "verify:active-context": "tsx src/gameSession/verifyContext.ts",
+    "verify:debug-editing": "tsx src/gameSession/verifyDebugEditing.ts"
   },
   "dependencies": {
     "dexie": "^4.4.4",

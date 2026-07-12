@@ -91,7 +91,9 @@ Algorithmic decision-making for AI-controlled civilizations; optional future LLM
 
 ## 6. Roadmap
 
-### 6.1. Foundation milestones (current priority)
+### 6.1. Foundation milestones (complete)
+
+F1–F12 and supporting D1 are **Done**. Gameplay milestones below remain the next product focus.
 
 See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 
@@ -109,7 +111,7 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F9 | New Game Wizard | Done |
 | F10 | Active Game Shell | Done |
 | F11 | Context Popups and Information Panels | Done |
-| F12 | Debug Editing Boundary | Queued |
+| F12 | Debug Editing Boundary | Done |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

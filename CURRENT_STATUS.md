@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F11 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets (F8), New Game wizard (F9), Active Game shell (F10), and contextual tile/city popups with expanded right panels (F11). Scratch editor remains at `/library/maps/current/edit`.
+**F1–F12 foundation work is complete:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), repository-backed rules presets (F8), New Game wizard (F9), Active Game shell (F10), contextual tile/city popups (F11), and development-only session debug editing (F12). Scratch editor remains at `/library/maps/current/edit`.
 
-F12 debug editing remains queued. Buildings, characters, and real city actions are planned UI only.
+Foundation phase is done. Next product work is gameplay beyond the foundation (units/combat/diplomacy/etc. per roadmap). Buildings, characters, and real city actions remain planned UI only.
 
 ---
 
@@ -179,9 +179,24 @@ Known limitations:
 - No real buildings/characters/Build mechanics.
 - Beauty remains Planned.
 
-### F12 — Not started
+### F12 — Debug Editing Boundary (Done)
 
-Next: **F12 Debug Editing Boundary**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- Development-only Debug Mode (`import.meta.env.DEV` / test force-flag); disabled on every load.
+- ConfirmDialog to enable; persistent warning banner + Inspect/Edit modes.
+- Compact tools: Terrain, Features, Hills, Mountains, Rivers, Resources, Clear Tile.
+- Pure `applyDebugEdit`; runtime-only debug state; session dirty + Save; Next Turn saves dirty first.
+- Leave guards when unsaved; source MapTemplate/civ/preset/other session/World Editor isolation verified.
+- Optional `debug_edit_saved` event on save; `npm run verify:debug-editing`.
+
+Known limitations:
+- Not available in production builds.
+- No city create/delete, rules/turn editing, or full World Editor embed.
+- Interactive browser + production-build smoke checklist NOT exhaustively run.
+
+### Foundation complete
+
+F1–F12 and D1 are Done. Next recommended focus: gameplay milestones (units/combat/etc.) or polish items deferred from F11/F12.
 
 ---
 
@@ -269,11 +284,11 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 - Procedural map generation is accepted as imperfect (see M2 above) — don't assume it will produce a recognizable or always-connected world.
 - Earth-like generation is regenerable but stylized and seed-dependent; forced bridges/straits improve Eurasia–Africa connectivity but do not guarantee Civ5-level geography.
-- Focused verification scripts exist for domain/persistence/catalogs/editor/layers/rules/new-game/active-game/active-context (`verify:*`); there is still no large end-to-end UI test framework.
+- Focused verification scripts exist for domain/persistence/catalogs/editor/layers/rules/new-game/active-game/active-context/debug-editing (`verify:*`); there is still no large end-to-end UI test framework.
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
 - Continue Game opens the most recent session only (no full catalog/delete/rename yet).
 - New Game wizard does not autosave drafts; refresh resets setup.
-- Active Game Cities/World panels and context popups are F11; buildings/characters remain planned-only.
+- Active Game Debug Mode is development-only (F12); production builds do not expose it.
 - Informational tile yields are display-only and do not affect growth.
 - World Editor catalog path is `/library/maps/:mapId/edit` with Save; scratch path `/library/maps/current/edit` has no catalog binding.
 
@@ -281,8 +296,8 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 ## 5. Nearest Next Steps
 
-1. **F12 — Debug Editing Boundary** (session-only live edit with safeguards).
-2. Optional: camera-anchored popups; richer M5 narrative event copy.
+1. Gameplay beyond foundation (units / combat / diplomacy per `PROJECT.md` roadmap), or polish deferred F11/F12 items (camera-anchored popups, richer tools).
+2. Optional: expand Continue Game into a full session catalog.
 
 ---
 
@@ -313,6 +328,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F12 Debug Editing Boundary
+
+- Classification: Significant
+- Summary: Added development-only Active Game Debug Mode (confirm-gated, Inspect/Edit) with session-only tile tools, source-template isolation, leave guards, and `npm run verify:debug-editing`. Foundation F1–F12 complete.
+- Files: `src/gameSession/{debugOps,debugAvailability,verifyDebugEditing,runtimeStore,...}*`, `DebugPanel.tsx`, `ActiveGamePage.tsx`, `MapCanvas.tsx`, CSS, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS (LF warnings; EOF blank-line fixed); all verify:* including `verify:debug-editing` PASS; interactive browser + production-build checklist NOT exhaustively run
 
 ### 2026-07-12 — F11 Context Popups and Information Panels
 
@@ -424,6 +446,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F12 Debug Editing Boundary / Foundation complete
+
+- Area: Product / Architecture / Safety
+- Change: Active Game gains an explicit development-only Debug Mode that can edit the loaded GameSession copy only. Source map templates, civilization templates, rules presets, other sessions, and the World Editor store remain immutable. Foundation milestones F1–F12 are complete.
+- Reason: Final foundation safety boundary before expanding gameplay systems.
+- Source of truth: `ARCHITECTURE.md` §3.11, `PRODUCT_RULES.md`, `src/gameSession/debugOps.ts`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F12
 
 ### 2026-07-12 — F11 Context Popups and Information Panels
 

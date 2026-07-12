@@ -2,12 +2,25 @@ import type { AxialCoord, Tile } from '../game/types'
 import type { GameCity, GameSession, GameSessionEvent } from '../domain/gameSession'
 import type { CivilizationInstance } from '../domain/civilizations'
 import type { GameRulesSnapshot } from '../domain/rules'
+import type { DebugInteractionMode, DebugTool, DebugToolSettings } from './debugOps'
 
 export type { GameSessionEvent, GameSessionEventType } from '../domain/gameSession'
+export type { DebugInteractionMode, DebugTool, DebugToolSettings } from './debugOps'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 export type ActivePanelTab = 'overview' | 'cities' | 'world'
 export type ActiveLoadStatus = 'idle' | 'loading' | 'ready' | 'not-found' | 'error'
+
+/** Runtime-only debug UI state — never persisted on GameSession. */
+export interface ActiveDebugState {
+  enabled: boolean
+  interactionMode: DebugInteractionMode
+  tool: DebugTool
+  settings: DebugToolSettings
+  /** Tiles changed since last successful save (for summary events / UX). */
+  pendingChangedTileCount: number
+  lastEditMessage: string | null
+}
 
 export interface ActiveRuntimeState {
   loadStatus: ActiveLoadStatus
@@ -39,6 +52,7 @@ export interface ActiveRuntimeState {
   turnBusy: boolean
   runtimeError: string | null
   dirty: boolean
+  debug: ActiveDebugState
 }
 
 export interface ApplyTurnResult {

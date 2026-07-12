@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F11 done; F12 queued)
+**Status:** Complete (F1–F12 foundation done)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -180,7 +180,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F9 | New Game Wizard | Create game sessions from templates | **Done** |
 | F10 | Active Game Shell | Separate gameplay UI | **Done** |
 | F11 | Context Popups and Panels | Tile, city, events, civilization summaries | **Done** |
-| F12 | Debug Editing Boundary | Safe live editing of current session only | Queued |
+| F12 | Debug Editing Boundary | Safe live editing of current session only | Done |
 
 ---
 
@@ -967,6 +967,8 @@ Implement the agreed gameplay information structure.
 
 # 16. F12 — Debug Editing Boundary
 
+**Status: Implemented** (dev-only Debug Mode; session-only tile tools; source isolation verified).
+
 ## Goal
 
 Allow live editing during development without corrupting source templates.
@@ -977,25 +979,40 @@ Add an explicit debug mode.
 
 Rules:
 
-- hidden or clearly marked in normal UI;
-- disabled by default;
-- confirmation required;
+- shown only in development builds (`import.meta.env.DEV`) or test force-flag;
+- disabled by default on every load/rehydrate;
+- confirmation required to enable;
+- Inspect / Edit sub-modes;
 - changes affect only the active game session;
-- original map template remains untouched.
+- original map template / civ templates / rules presets remain untouched.
+
+### Tools
+
+Terrain, Features, Hills, Mountains, Rivers, Resources, Clear Tile.
+
+### Save policy
+
+- Debug edits mark Unsaved; no per-click autosave.
+- Save Game persists session (+ optional `debug_edit_saved` summary event).
+- Next Turn saves dirty runtime first (including debug edits), then applies turn and autosaves.
 
 ## Deliverables
 
-- debug toggle;
-- visual warning;
-- selected editor tools available in session context;
-- session-only mutation path.
+- `DebugPanel` + enable ConfirmDialog + persistent warning banner;
+- pure `applyDebugEdit` single-tile ops;
+- runtime-only debug state (never persisted on GameSession);
+- MapCanvas debug edit callback / river edge hit testing;
+- leave protection (`beforeunload` + `useBlocker`);
+- `npm run verify:debug-editing`.
 
 ## Acceptance Criteria
 
-- source map hash/data remains unchanged after debug editing;
-- game session reflects the debug changes;
-- disabling debug mode restores normal gameplay interaction;
-- `npm run build` passes.
+- source map/civ/preset unchanged after debug editing + save;
+- another GameSession and World Editor store unchanged;
+- game session reflects the debug changes after save;
+- disabling debug mode restores normal Inspect interaction without discarding edits;
+- production gate blocks enable when DEV is false;
+- `npm run build` and `npm run verify:debug-editing` pass.
 
 ---
 

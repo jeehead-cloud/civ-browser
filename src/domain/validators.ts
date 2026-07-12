@@ -208,6 +208,7 @@ const EVENT_TYPES = new Set([
   'culture_generated',
   'annexation',
   'turn_completed',
+  'debug_edit_saved',
 ])
 
 export function validateGameSessionEvent(evt: GameSessionEvent): string[] {

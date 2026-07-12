@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard. **F10** loads a session into a dedicated active-game runtime (`src/gameSession/`), runs the turn engine, autosaves, and renders the Active Game shell. **F11** adds contextual tile/city popups, fresh-water and informational yield selectors, and expanded Overview/Cities/World panels. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. **F9** creates independent `GameSession` records via the New Game wizard. **F10** loads a session into a dedicated active-game runtime (`src/gameSession/`), runs the turn engine, autosaves, and renders the Active Game shell. **F11** adds contextual tile/city popups, fresh-water and informational yield selectors, and expanded Overview/Cities/World panels. **F12** adds development-only Debug Mode for session-only map edits with source-template isolation. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -47,7 +47,7 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | `/library/civilizations` | Civilizations catalog | Working (F4 repository-backed) |
 | `/settings` | Settings & Balance | Working (F8 rules presets) |
 | `/games/new` | New Game | Working four-step wizard (F9) |
-| `/games/:gameId` | Active Game | Working shell (F10) + context popups (F11) |
+| `/games/:gameId` | Active Game | Working (F10–F12: shell, popups, debug editing) |
 | `*` | Not found | Working |
 
 Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it uses a full-viewport F6 shell: top command bar, dominant map, right editing panel.
@@ -126,7 +126,7 @@ civ-browser/
     ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
     ├── rules/                     — F8 parameter defs, preset service/hook, verify:rules-presets
     ├── newGame/                   — F9 setup validation, createGameSession, persistence service, wizard hook, verify:new-game
-    ├── gameSession/               — F10 runtime + F11 context selectors (fresh water, yields, events, world metrics), verify:active-game / verify:active-context
+    ├── gameSession/               — F10–F12 runtime (turns, context selectors, debug ops), verify:active-game / verify:active-context / verify:debug-editing
     ├── game/                      — legacy runtime types + Zustand store (World Editor / Sim)
     │   └── mapLayers/             — F7 independent layer operations + verify:map-layers
     └── components/
@@ -316,6 +316,22 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Events | Normalize missing/unknown; newest first; click centers related city when resolvable |
 | Selection | Runtime-only; never dirties session or triggers save |
 | Verification | `npm run verify:active-context` |
+
+## 3.11. Active Game debug editing (F12)
+
+| Item | Behavior |
+|---|---|
+| Gate | UI/actions only when `import.meta.env.DEV` (or test force-flag). Default disabled; never persisted |
+| Enable | ConfirmDialog required; Cancel leaves disabled |
+| Warning | Persistent banner + shell outline + Play/View vs Debug Inspect/Edit badges |
+| Modes | Inspect = F11 popups; Edit = paint with compact tools (no World Editor embed) |
+| Tools | Terrain, Features, Hills, Mountains, Rivers, Resources, Clear Tile |
+| Ops | Pure `applyDebugEdit` — clones tiles; mirrors rivers; validates resources/features; blocks water under cities; Clear keeps terrain+city |
+| Persistence | Edits dirty runtime only; Save persists GameSession; Next Turn saves dirty first then turn+autosave |
+| Events | Optional `debug_edit_saved` summary on successful save with pending debug changes |
+| Isolation | Never mutates MapTemplate, CivilizationTemplate, GameRulesPreset, other sessions, or World Editor Zustand |
+| Leave guard | `beforeunload` + router `useBlocker` when dirty |
+| Verification | `npm run verify:debug-editing` |
 
 ---
 

@@ -800,13 +800,17 @@ Unavailable mechanics must not fake success.
 
 Active gameplay does not allow map editing by default.
 
-A development-only debug option may enable live editing.
+**Implementation (F12):** development-only Debug Mode on Active Game (`import.meta.env.DEV`).
 
 Rules:
 
-- debug editing changes only the current game session;
-- it never changes the source map;
-- enabling it must be explicit and visually clear.
+- disabled by default; confirmation required to enable;
+- Inspect vs Edit sub-modes (Edit paints; Inspect keeps F11 popups);
+- compact tools only (terrain/features/hills/mountains/rivers/resources/clear);
+- changes affect only the current GameSession runtime / saved session;
+- never changes source MapTemplate, civilization templates, or rules presets;
+- disabling Debug Mode does not discard unsaved or saved runtime edits;
+- persistent “Debug Editing Active” warning while enabled.
 
 ---
 
@@ -983,7 +987,7 @@ Before adding units, combat, diplomacy, great people, espionage, or other large 
 9. local persistence (done — F3);
 10. staged map-generation tools (done — F7);
 11. display layers (done — F6);
-12. debug editing boundaries (F12).
+12. debug editing boundaries (done — F12).
 
 ---
 

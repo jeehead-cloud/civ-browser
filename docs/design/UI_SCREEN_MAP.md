@@ -12,7 +12,7 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library/maps/current/edit` | Scratch World Editor | scenario-editor kit | Scratch + F6 layout | **Working** same shell; not catalog-backed |
 | `/settings` | Settings & Balance | Panel + category nav | F8 | **Working** rules preset editor |
 | `/games/new` | New Game | Wizard shell | F9 | **Working** |
-| `/games/:gameId` | Active Game | `ui_kits/game-session` | F10+F11 | **Working** (context popups + panels) |
+| `/games/:gameId` | Active Game | `ui_kits/game-session` | F10–F12 | **Working** (popups + debug editing) |
 | `*` | Not Found | App shell empty state | F1 | **Styled** |
 
 ---
@@ -69,8 +69,9 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 - F10: loads GameSession into isolated runtime; top bar; map (view-only); Next Turn with autosave; Save Game; Continue from Main Menu.
 - F11: tile/city context popups (map-edge overlay); Overview events (click-to-center) + expandable civ summaries; Cities search/filter/select; World metrics; Escape closes popup.
-- Components: Panel, Card, Badge, Button, Tabs/SegmentedControl, Input, EmptyState, Dialog, Accordion; active-game popup/event patterns in `src/components/activeGame/`.
-- Deferred: camera-anchored popups; real Build/buildings/characters; diplomacy/fog; full saved-games catalog.
+- F12: development-only Debug Mode (confirm to enable); Inspect/Edit; compact session-only paint tools; persistent warning; leave guards when unsaved.
+- Components: Panel, Card, Badge, Button, Tabs/SegmentedControl, Input, EmptyState, Dialog/ConfirmDialog, Accordion; `src/components/activeGame/*`.
+- Deferred: camera-anchored popups; real Build/buildings/characters; diplomacy/fog; full saved-games catalog; production debug tools.
 
 ### Not Found `*`
 
@@ -78,6 +79,6 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ---
 
-## Explicitly deferred from D1 / remaining after F11
+## Explicitly deferred from D1 / remaining after F12
 
-Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, real Build/buildings/characters, camera-anchored popups.
+Units, combat, diplomacy, tech trees, Lucide icon wiring, Toast/Tooltip primitives, real Build/buildings/characters, camera-anchored popups, production debug tooling.

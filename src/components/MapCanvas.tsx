@@ -47,6 +47,15 @@ export interface MapCanvasViewModel {
   selectedTileKey?: string | null
   onSelectTile?: (tileKey: string) => void
   focusRequest?: { coord: AxialCoord; nonce: number } | null
+  /**
+   * Active-game debug edit (F12). When set with editMode true, clicks paint
+   * instead of selecting. River tools receive a visual edge index.
+   */
+  debugEdit?: {
+    editMode: boolean
+    tool: string
+    onEditTile: (tileKey: string, riverEdgeIndex?: number) => void
+  }
 }
 
 interface MapCanvasProps {
@@ -338,6 +347,19 @@ export function MapCanvas({ view, className }: MapCanvasProps) {
     if (!tile) return
 
     if (isActiveView) {
+      if (view?.debugEdit?.editMode) {
+        if (view.debugEdit.tool === 'rivers') {
+          const tileCenter = axialToPixel(tile.coord)
+          const dx = world.x - tileCenter.x
+          const dy = world.y - tileCenter.y
+          const angleDeg = (Math.atan2(dy, dx) * 180) / Math.PI
+          const edgeIndex = (((Math.round((angleDeg - 30) / 60) % 6) + 6) % 6)
+          view.debugEdit.onEditTile(key, edgeIndex)
+        } else {
+          view.debugEdit.onEditTile(key)
+        }
+        return
+      }
       view?.onSelectTile?.(key)
       return
     }

@@ -31,3 +31,20 @@ export {
   sanitizeSelection,
 } from './contextSelectors'
 export { normalizeEvents, toEventDisplayItems, resolveEventFocus } from './events'
+export {
+  applyDebugEdit,
+  DEFAULT_DEBUG_TOOL_SETTINGS,
+  riverStorageDirFromEdgeIndex,
+} from './debugOps'
+export type {
+  DebugTool,
+  DebugInteractionMode,
+  DebugToolSettings,
+  DebugEditRequest,
+  DebugEditResult,
+} from './debugOps'
+export {
+  isDebugEditingAvailable,
+  setDebugEditingAvailableForTests,
+} from './debugAvailability'
+export { emptyDebugState } from './runtimeAdapters'

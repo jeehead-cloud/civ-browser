@@ -1059,3 +1059,203 @@
   font-size: var(--text-size-xs);
   color: var(--text-secondary);
 }
+
+/* --- Rules presets (F8) --- */
+.rules-presets-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.rules-presets-toolbar {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) auto auto;
+  gap: var(--space-4);
+  align-items: end;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+}
+
+.rules-presets-toolbar__status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding-bottom: 4px;
+}
+
+.rules-presets-toolbar__save {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.rules-presets-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.rules-presets-nav {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  padding: var(--space-4);
+}
+
+.rules-presets-nav__heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-size-xs);
+  font-weight: 600;
+  letter-spacing: var(--text-tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.rules-presets-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rules-presets-nav__btn {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: 500 var(--text-size-sm) / 1.2 var(--font-sans);
+}
+
+.rules-presets-nav__btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.rules-presets-nav__btn.is-active {
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+}
+
+.rules-presets-nav__btn.is-planned,
+.rules-presets-nav__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rules-presets-nav__planned {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rules-presets-params {
+  min-width: 0;
+}
+
+.rules-presets-filters {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  align-items: end;
+  margin-bottom: var(--space-4);
+}
+
+.rules-presets-changed-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-size-sm);
+  color: var(--text-secondary);
+  padding-bottom: 8px;
+  white-space: nowrap;
+}
+
+.rules-presets-reset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.rules-param-card {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.rules-param-card--changed {
+  border-color: var(--accent-warning, var(--accent-primary));
+}
+
+.rules-param-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.rules-param-card__title {
+  margin: 0;
+  font: 600 var(--text-size-md) / 1.2 var(--font-sans);
+}
+
+.rules-param-card__desc {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-size-sm);
+  color: var(--text-secondary);
+}
+
+.rules-param-card__input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.rules-param-card__input-row .ui-input {
+  max-width: 160px;
+}
+
+.rules-param-card__unit {
+  font-size: var(--text-size-sm);
+  color: var(--text-tertiary);
+}
+
+.rules-param-card__meta {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-size-xs);
+  color: var(--text-tertiary);
+}
+
+@media (max-width: 900px) {
+  .rules-presets-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .rules-presets-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rules-presets-filters {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F7 done; F8+ queued)
+**Status:** Active (F1–F8 done; F9+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -176,7 +176,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F5 | World Editor Migration | Existing editor moved into dedicated selected-map route | **Done** |
 | F6 | World Editor Restructure | New Civ V-like editor structure | **Done** |
 | F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | **Done** |
-| F8 | Rules Presets | Scalable settings and balance system | Queued |
+| F8 | Rules Presets | Scalable settings and balance system | **Done** |
 | F9 | New Game Wizard | Create game sessions from templates | Queued |
 | F10 | Active Game Shell | Separate gameplay UI | Queued |
 | F11 | Context Popups and Panels | Tile, city, events, civilization summaries | Queued |
@@ -728,6 +728,8 @@ Introduce or expose independent operations for:
 
 # 12. F8 — Rules Presets
 
+**Status: Implemented** (repository-backed `/settings` editor; Standard protected; F9 snapshot selection deferred).
+
 ## Goal
 
 Create scalable global settings and balance presets.
@@ -770,6 +772,17 @@ Preset actions:
 - existing settings are migrated into a default preset;
 - future parameters can be added without redesigning the screen;
 - `npm run build` passes.
+
+## Implementation notes
+
+- Route `/settings` uses declarative `RULES_PARAMETERS` + `useRulesPresets` + `rulesPresetService` (no Dexie in React).
+- Active categories: City Development (`baseGrowthRate`), Culture & Influence (`capitalCulturePerTurn`, `cultureAnnexThreshold`). Other categories shown as Planned/disabled.
+- `baseGrowthRate` stored as decimal; UI edits percent (`storage ↔ UI` helpers).
+- Standard (`rules-standard`) editable/duplicable/resettable; not deletable; seed idempotent and non-overwriting.
+- Draft/save model with dirty badge, revert, reset field/category/all, search, changed-only; `beforeunload` + router blocker.
+- Legacy World Editor Sim `SettingsPanel` remains independent (clarifying note added).
+- Verification: `npm run verify:rules-presets`.
+- Deviation: no System Rules active category (no current parameters belong there).
 
 ---
 

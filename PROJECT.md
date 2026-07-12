@@ -105,7 +105,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F5 | World Editor Migration (selected-map load/save) | Done |
 | F6 | World Editor Restructure (command bar + right panel) | Done |
 | F7 | Independent Map Layers | Done |
-| F8–F12 | Rules presets, new game, active game, … | Queued |
+| F8 | Rules Presets (Settings & Balance) | Done |
+| F9–F12 | New game, active game, … | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

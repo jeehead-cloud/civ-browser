@@ -4,6 +4,7 @@ import type { CivilizationTemplate } from './civilizations'
 import type { GameSession } from './gameSession'
 import type { MapTemplate } from './maps'
 import type { GameRulesPreset, GameRulesSnapshot, GameRulesValues } from './rules'
+import { RULES_VALUE_LIMITS } from './rulesDefaults'
 import { fail, ok, type ConversionResult } from './result'
 
 /** Domain entity `version` field currently supported for persistence / adapters. */
@@ -15,14 +16,21 @@ export function isFiniteNumber(n: unknown): n is number {
 
 export function validateRulesValues(settings: GameRulesValues, label = 'settings'): string[] {
   const errors: string[] = []
-  if (!isFiniteNumber(settings.baseGrowthRate) || settings.baseGrowthRate < 0) {
-    errors.push(`${label}.baseGrowthRate must be a finite number ≥ 0`)
-  }
-  if (!isFiniteNumber(settings.capitalCulturePerTurn) || settings.capitalCulturePerTurn < 0) {
-    errors.push(`${label}.capitalCulturePerTurn must be a finite number ≥ 0`)
-  }
-  if (!isFiniteNumber(settings.cultureAnnexThreshold) || settings.cultureAnnexThreshold <= 0) {
-    errors.push(`${label}.cultureAnnexThreshold must be a finite number > 0`)
+  for (const key of Object.keys(RULES_VALUE_LIMITS) as (keyof GameRulesValues)[]) {
+    const value = settings?.[key]
+    const lim = RULES_VALUE_LIMITS[key]
+    const field = `${label}.${key}`
+    if (!isFiniteNumber(value)) {
+      errors.push(`${field} must be a finite number`)
+      continue
+    }
+    if (value < lim.min || value > lim.max) {
+      errors.push(`${field} must be between ${lim.min} and ${lim.max}`)
+      continue
+    }
+    if (lim.integer && !Number.isInteger(value)) {
+      errors.push(`${field} must be an integer`)
+    }
   }
   return errors
 }

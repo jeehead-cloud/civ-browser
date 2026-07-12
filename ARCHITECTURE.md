@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. **F7** adds independent terrain/feature/elevation/river/resource layer operations. **F8** provides repository-backed rules presets at `/settings`. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -124,12 +124,14 @@ civ-browser/
     │   ├── verification.ts / verify.ts
     │   └── editorPersistenceVerification.ts / verifyEditorPersistence.ts
     ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
+    ├── rules/                     — F8 parameter defs, preset service/hook, verify:rules-presets
     ├── game/                      — legacy runtime types + Zustand store
     │   └── mapLayers/             — F7 independent layer operations + verify:map-layers
     └── components/
         ├── AppShell.tsx
         ├── ui/                    — Button, Accordion, SegmentedControl, Dialog, …
         ├── editor/                — EditorCommandBar, EditorRightPanel, Tiles/Cities/Display sections
+        ├── rules/                 — ParameterField
         ├── MapCanvas.tsx
         └── … (CityModal, TileInfoPanel, temporary Simulation panels)
 ```
@@ -245,6 +247,22 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Resources | Clear all; randomize with Sparse/Standard/Rich density multiplier (not per-tile quantity) |
 | Full map | Existing `regenerateMap` / `generateEarthMap` remain distinct full-pipeline actions |
 | Verification | `npm run verify:map-layers` |
+
+## 3.7. Rules presets / Settings & Balance (F8)
+
+| Item | Behavior |
+|---|---|
+| Route | `/settings` — repository-backed preset editor (no longer a placeholder) |
+| Definitions | `src/rules/parameterDefinitions.ts` drives labels, units, ranges, defaults, category grouping |
+| Service/hook | `rulesPresetService` + `useRulesPresets` via `getCatalogPersistence` (no Dexie in React) |
+| Percent conversion | `baseGrowthRate` stored as decimal (0.01); UI edits percent via `storageToUiValue` / `uiToStorageValue` |
+| Validation | Domain `validateRulesValues` / `RULES_VALUE_LIMITS` aligned with parameter defs |
+| Standard | `rules-standard` — editable, duplicable, resettable; delete blocked; seed idempotent / non-overwriting |
+| Draft model | Local draft until Save; Revert Unsaved; Reset field/category/all (dirty until Save) |
+| Dirty protection | `beforeunload` + `useBlocker`; confirm on preset switch |
+| Legacy boundary | World Editor Sim `SettingsPanel` edits Zustand `GameSettings` only — not the preset catalog |
+| F9 boundary | Presets are reusable templates; F9 will snapshot into `GameRulesSnapshot` without live linking |
+| Verification | `npm run verify:rules-presets` |
 
 ---
 

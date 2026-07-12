@@ -78,7 +78,15 @@ At the first stage, only **Maps** and **Civilizations** must be active.
 
 ### Settings & Balance
 
-Contains global balance presets and editable game parameters.
+Contains global balance presets and editable game parameters at `/settings` (F8).
+
+Implemented:
+
+- preset list / select / create / Create Copy / rename / save / delete (Standard not deletable);
+- categories City Development + Culture & Influence;
+- parameters `baseGrowthRate` (decimal storage, % UI), `capitalCulturePerTurn`, `cultureAnnexThreshold`;
+- search, changed-only filter, revert/reset field/category/all;
+- does not mutate GameSession snapshots or World Editor Sim settings.
 
 ---
 
@@ -812,6 +820,8 @@ Rules:
 ## 22. Global Settings and Balance
 
 The settings screen must support a growing number of parameters without requiring a redesign.
+
+**Implementation (F8):** `/settings` uses declarative parameter definitions, category navigation, and repository-backed presets. Future categories appear as Planned until they have real parameters.
 
 ### 22.1. Layout
 

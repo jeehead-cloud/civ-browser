@@ -7,6 +7,10 @@ export function SettingsPanel() {
   return (
     <div style={{ padding: 16, borderTop: '1px solid #ddd' }}>
       <h4>Глобальные настройки</h4>
+      <p style={{ fontSize: 12, color: '#666', marginTop: 0 }}>
+        Current simulation settings — not the global preset catalog. Edit reusable presets under Settings &amp;
+        Balance.
+      </p>
       <div style={{ marginBottom: 8 }}>
         <label style={{ display: 'block', fontSize: 13 }}>
           Базовый рост городов за ход (%)

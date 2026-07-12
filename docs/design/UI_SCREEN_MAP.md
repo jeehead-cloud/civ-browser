@@ -10,7 +10,7 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library/civilizations` | Civilizations Catalog | Same | F4 | **Working catalog** |
 | `/library/maps/:mapId/edit` | World Editor (selected map) | `ui_kits/scenario-editor` (reference) | F5+F6 | **Working** F6 layout + F5 load/save |
 | `/library/maps/current/edit` | Scratch World Editor | scenario-editor kit | Scratch + F6 layout | **Working** same shell; not catalog-backed |
-| `/settings` | Settings & Balance | Panel + category nav (future) | F8 | **Styled placeholder** |
+| `/settings` | Settings & Balance | Panel + category nav | F8 | **Working** rules preset editor |
 | `/games/new` | New Game | Wizard shell (future) | F9 | **Styled placeholder** |
 | `/games/:gameId` | Active Game | `ui_kits/game-session` | F10 / F11 | **Styled placeholder** |
 | `*` | Not Found | App shell empty state | F1 | **Styled** |
@@ -54,7 +54,9 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ### Settings `/settings`
 
-- Placeholder until rules presets (F8). Temporary live settings remain under editor Sim section.
+- F8: repository-backed rules presets (Standard protected); category nav; parameter cards; search/changed-only; draft Save/Revert/reset; dirty leave guards.
+- Components: PageHeader, FormField, Input, Button, Badge, Dialog, ConfirmDialog, ParameterField, EmptyState.
+- Deferred: F9 apply-to-new-game; future category parameters.
 
 ### New Game `/games/new`
 

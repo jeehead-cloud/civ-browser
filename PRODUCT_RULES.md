@@ -61,6 +61,14 @@ The default map is 250×135 hexes (~33,750 tiles). This is deliberately much lar
 
 ---
 
+## 3a. Growth rate representation
+
+- `baseGrowthRate` is stored as a decimal fraction (example: `0.01` means +1% population per turn).
+- Settings & Balance and the legacy Sim settings panel display/edit this value as a percentage (example: `1`).
+- Do not treat a UI value of `1` as a 100% growth rate.
+
+---
+
 ## 4. City Rules
 
 - A city is founded via the City modal, which requires a **name** and a **starting population** (minimum 1).

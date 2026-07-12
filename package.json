@@ -12,7 +12,8 @@
     "verify:catalogs": "tsx src/catalog/verify.ts",
     "verify:editor-persistence": "tsx src/catalog/verifyEditorPersistence.ts",
     "verify:world-editor-ui": "tsx src/editor/verifyWorldEditorUi.ts",
-    "verify:map-layers": "tsx src/game/mapLayers/verify.ts"
+    "verify:map-layers": "tsx src/game/mapLayers/verify.ts",
+    "verify:rules-presets": "tsx src/rules/verify.ts"
   },
   "dependencies": {
     "dexie": "^4.4.4",

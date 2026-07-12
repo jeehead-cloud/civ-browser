@@ -17,7 +17,7 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F7 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), and independent map-layer operations (F7). Scratch editor remains at `/library/maps/current/edit`. Settings / New Game / Active Game are still placeholders (F8+).
+**F1–F8 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), World Editor IA restructure (F6), independent map-layer operations (F7), and repository-backed rules presets at `/settings` (F8). Scratch editor remains at `/library/maps/current/edit`. New Game / Active Game are still placeholders (F9+).
 
 There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
 
@@ -112,9 +112,23 @@ Implemented:
 Deferred:
 - Splitting Earth generation into independent layers; Web Workers; per-tile resource quantity.
 
-### F8–F12 — Not started
+### F8 — Rules Presets (Done)
 
-Next: **F8 Rules Presets**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Implemented:
+- `/settings` repository-backed preset editor (Standard seeded, protected from delete).
+- Declarative `RULES_PARAMETERS` / categories; City Development + Culture & Influence active.
+- Create, Create Copy, rename, Save, Revert Unsaved, reset field/category/all, search, changed-only.
+- `baseGrowthRate` percent UI ↔ decimal storage; domain limits aligned with definitions.
+- Dirty leave protection (`beforeunload` + router blocker); preset switch confirm.
+- Legacy Sim `SettingsPanel` unchanged except clarifying note — not synced to presets.
+- Verification: `npm run verify:rules-presets`.
+
+Deferred:
+- F9 selecting a preset into a new GameSession; future category parameters; preset import/export.
+
+### F9–F12 — Not started
+
+Next: **F9 New Game Wizard**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -244,6 +258,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
 
+### 2026-07-12 — F8 Rules Presets
+
+- Classification: Significant
+- Summary: Replaced `/settings` placeholder with repository-backed rules preset editor; declarative parameter definitions; Standard protected; draft/save/reset/search/dirty guards; legacy Sim settings remain independent; `npm run verify:rules-presets`.
+- Files: `src/rules/*`, `src/pages/SettingsBalancePage.tsx`, `src/components/rules/ParameterField.tsx`, `src/components/SettingsPanel.tsx`, `src/domain/{rulesDefaults,validators,index}.ts`, `src/persistence/seed.ts`, `package.json`, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS; all verify:* including `verify:rules-presets` PASS; interactive browser Settings checklist NOT exhaustively run
+
 ### 2026-07-12 — F7 Independent Map Layers
 
 - Classification: Significant
@@ -326,6 +347,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F8 Rules Presets
+
+- Area: Product / Architecture
+- Change: Settings & Balance is a real preset catalog over `RulesPresetRepository`. Declarative parameter definitions drive the editor; Standard cannot be deleted; drafts save explicitly; presets do not mutate GameSession snapshots or legacy Sim settings.
+- Reason: Establishes reusable balance configuration before F9 copies a preset into a new session snapshot.
+- Source of truth: `ARCHITECTURE.md` §3.7, `src/rules/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F8
 
 ### 2026-07-12 — F7 Independent Map Layers
 

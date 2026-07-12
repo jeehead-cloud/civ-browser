@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "verify:domain": "tsx src/domain/verify.ts",
     "verify:persistence": "tsx src/persistence/verify.ts",
-    "verify:catalogs": "tsx src/catalog/verify.ts"
+    "verify:catalogs": "tsx src/catalog/verify.ts",
+    "verify:editor-persistence": "tsx src/catalog/verifyEditorPersistence.ts"
   },
   "dependencies": {
     "dexie": "^4.4.4",

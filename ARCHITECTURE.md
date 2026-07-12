@@ -23,12 +23,13 @@
 | State management | Zustand | Single store in `src/game/store.ts` (legacy runtime; domain migration deferred) |
 | Domain model (F2) | `src/domain/` | Template vs session TypeScript types + adapters; not wired into Zustand yet |
 | Local persistence (F3) | IndexedDB via Dexie (`src/persistence/`) | Repository interfaces used by F4 catalogs via `src/catalog/` |
-| Content catalogs (F4) | `src/catalog/` + library pages | Maps/Civilizations CRUD, v1 JSON import/export, temporary editor bridge |
+| Content catalogs (F4) | `src/catalog/` + library pages | Maps/Civilizations CRUD, v1 JSON import/export |
+| Selected-map editor (F5) | `/library/maps/:mapId/edit` | Load/save MapTemplate via repositories; dirty tracking; legacy Zustand runtime |
 | Backend | **None** | Fully client-side; no server, no accounts |
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs to those repositories; the World Editor still uses legacy Zustand memory (temporary bridge) until F5.
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -41,16 +42,19 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | `/` | Main Menu | Working |
 | `/library` | Game Content Library home | Working (Maps + Civilizations entry) |
 | `/library/maps` | Maps catalog | Working (F4 repository-backed) |
-| `/library/maps/current/edit` | World Editor (existing MVP) | Working — temporary path until F5 selected-map route |
+| `/library/maps/:mapId/edit` | World Editor for a catalog map | Working (F5 load/save) |
+| `/library/maps/current/edit` | Scratch World Editor (MVP) | Working — not catalog-backed; development fallback |
 | `/library/civilizations` | Civilizations catalog | Working (F4 repository-backed) |
 | `/settings` | Settings & Balance | Placeholder |
 | `/games/new` | New Game | Placeholder |
 | `/games/:gameId` | Active Game | Placeholder (shows `gameId` as route context only) |
 | `*` | Not found | Working |
 
-Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it keeps the full viewport for the map and only adds a slim chrome strip (Main Menu + Maps Catalog links).
+Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it keeps the full viewport for the map and a slim chrome strip (Main Menu + Maps Catalog + Save controls on catalog maps).
 
-Target later route for a selected map: `/library/maps/:mapId/edit` (**F5**). Opening a catalog map in F4 loads tiles/cities into the current editor via a temporary bridge; edits are **not** written back to `MapRepository` until F5.
+Routing uses `createBrowserRouter` / `RouterProvider` so `useBlocker` can guard unsaved editor navigation.
+
+Catalog **Open** navigates to `/library/maps/:mapId/edit`. Scratch `/library/maps/current/edit` remains for Main Menu / nav “World Editor” without a selected catalog id.
 
 ---
 
@@ -108,16 +112,17 @@ civ-browser/
     │   ├── verification.ts
     │   ├── verify.ts              — npm run verify:persistence
     │   └── index.ts
-    ├── catalog/                   — F4 catalog services / hooks (no Dexie in React pages)
+    ├── catalog/                   — F4/F5 catalog services / hooks (no Dexie in React pages)
     │   ├── persistence.ts         — lazy getCatalogPersistence singleton
     │   ├── mapFactory.ts
     │   ├── mapJson.ts             — v1 JSON ↔ MapTemplate
     │   ├── civilizationFactory.ts
-    │   ├── editorBridgeCore.ts    — pure MapTemplate → legacy payload + sessionStorage meta
-    │   ├── editorBridge.ts        — loads payload into Zustand (no catalog write-back)
+    │   ├── editorBridgeCore.ts    — pure MapTemplate → legacy payload
+    │   ├── editorBridge.ts        — loads payload into Zustand
+    │   ├── editorPersistence.ts   — legacy ↔ MapTemplate save/load helpers
     │   ├── hooks/
-    │   ├── verification.ts
-    │   └── verify.ts              — npm run verify:catalogs
+    │   ├── verification.ts / verify.ts
+    │   └── editorPersistenceVerification.ts / verifyEditorPersistence.ts
     ├── game/                      — legacy runtime types + Zustand store
     └── components/
         ├── AppShell.tsx
@@ -153,7 +158,7 @@ This map reflects the code as of the last update — always check the actual rep
 
 **Validators** (`src/domain/validators.ts`): pure entity validators shared by adapters and F3 persistence saves.
 
-**UI wiring:** F4 catalogs use domain types through repositories. Zustand still uses legacy `GameState`; F5 will persist selected-map edits.
+**UI wiring:** F4 catalogs and F5 selected-map editor use domain types through repositories. Zustand still uses legacy `GameState` for runtime editing.
 
 ---
 
@@ -187,11 +192,30 @@ This map reflects the code as of the last update — always check the actual rep
 | Map readiness | Temporary heuristic: Blank / Draft (land, no cities) / Ready (≥1 city) |
 | Map JSON import | Legacy **v1** file → new catalog map; **ignores** `civilizations` and `settings` (noted in UI) |
 | Map JSON export | **v1-compatible** JSON (`version`, `mapWidth`, `mapHeight`, `tiles`, `cities`) — catalog metadata omitted |
-| Editor bridge | `loadMapTemplateIntoEditor` → Zustand `loadCatalogMapBridge` + `sessionStorage` meta; route stays `/library/maps/current/edit` |
-| Save-back | **None** until F5 — editor changes do not update the selected catalog map |
+| Editor open | Catalog Open → `/library/maps/:mapId/edit` (F5) |
+| Save-back | Save / Save As via `MapRepository` (F5) |
 | Verification | `npm run verify:catalogs` |
 
 Legacy editor Load/Export Map buttons are unchanged and independent of the catalog import/export actions.
+
+---
+
+## 3.4. Selected-map editor persistence (F5)
+
+| Item | Behavior |
+|---|---|
+| Route | `/library/maps/:mapId/edit` |
+| Scratch fallback | `/library/maps/current/edit` — no catalog binding / no Save |
+| Load | `loadCatalogMapById` → `loadMapTemplateIntoEditor` → Zustand `loadSelectedCatalogMap` |
+| Save | `legacyEditorToMapTemplate` → validate → `MapRepository.save`; preserves `id` / `version` / `createdAt`; refreshes `updatedAt` |
+| Save As | New id + navigate to new `:mapId/edit` |
+| Dirty | Store flag set by map-content mutators (`paintAt`, rivers, cities, regenerate, earth, import, rename); not by pan/zoom/view mode |
+| Leave guard | `beforeunload` + React Router `useBlocker` confirm when dirty |
+| Not-found / error | Atlas EmptyState + retry / back to catalog; editor not initialized |
+| Legacy JSON | Toolbar import marks dirty; export uses active map dimensions; schema unchanged |
+| Verification | `npm run verify:editor-persistence` |
+
+Editor visual redesign remains **F6**.
 
 ---
 

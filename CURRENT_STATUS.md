@@ -17,7 +17,7 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F4 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), and repository-backed Maps/Civilizations catalogs (F4). The live World Editor remains on legacy Zustand at `/library/maps/current/edit` with a temporary catalog→editor bridge (no write-back). Settings / New Game / Active Game are still placeholders (F5+).
+**F1–F5 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), and selected-map editor load/save at `/library/maps/:mapId/edit` (F5). Scratch editor remains at `/library/maps/current/edit`. Settings / New Game / Active Game are still placeholders (F6+).
 
 There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
 
@@ -29,7 +29,7 @@ There is no human-controlled civilization and no units/combat/AI yet — those r
 
 Implemented:
 - React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations catalogs, Settings & Balance placeholder, New Game placeholder, Active Game placeholder (`/games/:gameId` shows route id only), and not-found.
-- Existing editor UI mounted at `/library/maps/current/edit` (temporary path until F5 selected-map route).
+- Existing editor UI at `/library/maps/:mapId/edit` (catalog) and `/library/maps/current/edit` (scratch).
 - `AppShell` for non-editor screens; editor uses full viewport with a slim chrome strip.
 
 ### D1 — Design System Foundation (Done — supporting task)
@@ -68,20 +68,31 @@ Implemented:
 
 Implemented:
 - `/library` entry to Maps and Civilizations (other categories planned-only).
-- Maps catalog (`/library/maps`): list/search, create blank ocean map, duplicate, delete (confirm), v1 JSON import/export, Open → temporary editor bridge.
+- Maps catalog (`/library/maps`): list/search, create blank ocean map, duplicate, delete (confirm), v1 JSON import/export, Open → `/library/maps/:mapId/edit`.
 - Civilizations catalog (`/library/civilizations`): list/search, create/edit, duplicate, delete (confirm).
 - Catalog layer `src/catalog/` (factories, JSON conversion, hooks, lazy `getCatalogPersistence`); React pages do not call Dexie directly.
 - Temporary readiness badges: Blank / Draft / Ready (heuristic only).
-- Editor banner when a catalog map is loaded; edits stay in legacy memory/JSON until F5.
 - Verification: `npm run verify:catalogs`.
 
-Not done (intentionally → F5+):
-- `/library/maps/:mapId/edit` and saving editor changes back to `MapRepository`.
-- Rules presets UI, game-session management, Continue Game.
+### F5 — World Editor Migration (Done)
 
-### F5–F12 — Not started
+Implemented:
+- Primary route `/library/maps/:mapId/edit` loads `MapTemplate` from `MapRepository` (loading / not-found / error states).
+- Converts to legacy Zustand via dedicated adapters; Save / Save As write back through repositories.
+- Dirty tracking for map-content edits; Save enabled when dirty; failed save keeps dirty.
+- Unsaved-leave protection: `beforeunload` + in-app confirm via `useBlocker` (data router).
+- Chrome shows map name, saved/unsaved badge, last saved time, Rename / Save / Save As.
+- Scratch `/library/maps/current/edit` kept as non-catalog fallback.
+- Legacy toolbar JSON import/export retained (import marks dirty; export uses active dimensions).
+- Verification: `npm run verify:editor-persistence`.
 
-Next: **F5 World Editor Migration** (selected-map route + catalog write-back). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Not done (intentionally → F6+):
+- World Editor visual redesign (F6).
+- Rules presets UI, New Game, Active Game.
+
+### F6–F12 — Not started
+
+Next: **F6 World Editor Restructure** (visual redesign). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -172,14 +183,14 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 - Focused verification scripts exist for domain/persistence/catalogs (`verify:domain`, `verify:persistence`, `verify:catalogs`); there is still no large end-to-end UI test framework.
 - There is no way to pause/return to Edit phase cleanly from Play phase (see M1 above).
 - Settings / New Game / Active Game / Continue Game remain placeholders until F8–F10.
-- World Editor path `/library/maps/current/edit` is temporary until F5 selected-map persistence; catalog Open is a one-way bridge into legacy memory.
+- World Editor catalog path is `/library/maps/:mapId/edit` with Save; scratch path `/library/maps/current/edit` has no catalog binding.
 
 ---
 
 ## 5. Nearest Next Steps
 
-1. **F5 — World Editor Migration** (`/library/maps/:mapId/edit` + saving edits back to `MapRepository`).
-2. Then F6 editor redesign; F8 rules presets; F9 New Game; M5 event log remains open on the gameplay side.
+1. **F6 — World Editor Restructure** (Atlas visual redesign of tools/panels).
+2. Then F8 rules presets; F9 New Game; M5 event log remains open on the gameplay side.
 
 ---
 
@@ -210,6 +221,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — F5 World Editor Migration
+
+- Classification: Significant
+- Summary: Selected-map route `/library/maps/:mapId/edit` with repository load/save, dirty tracking, leave guards, Save As; scratch `current` editor retained; `createBrowserRouter` for blockers; `npm run verify:editor-persistence`.
+- Files: `src/App.tsx`, `src/pages/WorldEditorPage.tsx`, `src/pages/MapsCatalogPage.tsx`, `src/game/store.ts`, `src/catalog/editorPersistence*`, `src/catalog/hooks/useSelectedMapEditor.ts`, `src/catalog/editorBridge.ts`, `package.json`, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS; `verify:domain` / `verify:persistence` / `verify:catalogs` / `verify:editor-persistence` PASS; manual smoke PASS (Open → `:mapId/edit`, Saved chrome, not-found for missing id)
 
 ### 2026-07-12 — F4 Game Content Library
 
@@ -272,6 +290,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — F5 World Editor Migration
+
+- Area: Product / Architecture
+- Change: Catalog maps open at `/library/maps/:mapId/edit` with load/save through `MapRepository`, dirty-state tracking, and unsaved-navigation protection. Scratch editor remains at `current/edit`. Legacy Zustand runtime and v1 JSON toolbar I/O are preserved.
+- Reason: Completes the F4 temporary bridge so reusable maps are editable as selected catalog items before F6 visual redesign.
+- Source of truth: `ARCHITECTURE.md` §3.4, `src/catalog/editorPersistence.ts`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F5
 
 ### 2026-07-12 — F4 Game Content Library
 

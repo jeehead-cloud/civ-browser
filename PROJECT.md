@@ -102,7 +102,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F2 | Domain Model Separation | Done |
 | F3 | Persistence Abstraction | Done |
 | F4 | Content Library (Maps / Civilizations catalogs) | Done |
-| F5–F12 | Editor migration, presets, new game, active game, … | Queued |
+| F5 | World Editor Migration (selected-map load/save) | Done |
+| F6–F12 | Editor redesign, presets, new game, active game, … | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 

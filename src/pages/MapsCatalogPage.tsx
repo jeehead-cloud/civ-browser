@@ -79,12 +79,7 @@ export function MapsCatalogPage() {
 
   async function handleOpen(id: string) {
     setActionError(null)
-    try {
-      await catalog.openInEditor(id)
-      navigate('/library/maps/current/edit')
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Open failed')
-    }
+    navigate(`/library/maps/${id}/edit`)
   }
 
   return (
@@ -92,7 +87,7 @@ export function MapsCatalogPage() {
       <PageHeader
         eyebrow="Library / Maps"
         title="Maps Catalog"
-        description="Reusable map templates stored in IndexedDB. Opening a map loads it into the temporary current editor (F4 bridge) — edits are not written back until F5."
+        description="Reusable map templates stored in IndexedDB. Open loads `/library/maps/:mapId/edit` and saves write back to the selected catalog item."
       />
 
       <div className="catalog-toolbar">
@@ -118,7 +113,7 @@ export function MapsCatalogPage() {
           onChange={(e) => void handleImport(e.target.files?.[0] ?? null)}
         />
         <Link to="/library/maps/current/edit" className="ui-button ui-button--ghost ui-button--md">
-          Current Editor
+          Scratch Editor
         </Link>
       </div>
 

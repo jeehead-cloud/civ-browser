@@ -444,16 +444,22 @@
 .world-editor-chrome {
   flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-3) var(--space-5);
   min-height: var(--statusbar-height);
-  padding: 0 var(--space-5);
+  padding: var(--space-2) var(--space-5);
   background: var(--surface-panel);
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-tertiary);
-  font: 500 var(--text-size-2xs) / 1 var(--font-sans);
+  font: 500 var(--text-size-2xs) / 1.3 var(--font-sans);
   letter-spacing: var(--text-tracking-wide);
   text-transform: uppercase;
+}
+
+.world-editor-chrome .ui-button {
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .world-editor-chrome a {

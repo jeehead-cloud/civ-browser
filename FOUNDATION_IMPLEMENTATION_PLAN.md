@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F4 done; F5+ queued)
+**Status:** Active (F1–F5 done; F6+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -173,7 +173,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F2 | Domain Model Separation | Reusable templates and active sessions become distinct | **Done** |
 | F3 | Persistence Abstraction | Local catalogs and game saves | **Done** |
 | F4 | Content Library | Maps and civilizations become reusable catalog items | **Done** |
-| F5 | World Editor Migration | Existing editor moved into dedicated selected-map route | Queued |
+| F5 | World Editor Migration | Existing editor moved into dedicated selected-map route | **Done** |
 | F6 | World Editor Restructure | New Civ V-like editor structure | Queued |
 | F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | Queued |
 | F8 | Rules Presets | Scalable settings and balance system | Queued |
@@ -532,6 +532,8 @@ Actions:
 
 # 9. F5 — World Editor Migration
 
+**Status: Implemented** (selected-map route + repository save; visual redesign deferred to F6).
+
 ## Goal
 
 Move the current editor into a dedicated map route.
@@ -565,6 +567,14 @@ Existing functionality must remain available:
 - dirty-state tracking;
 - leave-with-unsaved-changes warning;
 - map-specific state instead of one global unnamed map.
+
+## Implementation notes / justified deviations
+
+- Scratch route `/library/maps/current/edit` retained as non-catalog fallback (Main Menu / nav).
+- Save As implemented (new id + navigate).
+- App switched to `createBrowserRouter` so `useBlocker` works for in-app leave confirms.
+- Zustand remains the editor runtime; only catalog meta + dirty flags were added.
+- Verification: `npm run verify:editor-persistence`.
 
 ## Acceptance Criteria
 

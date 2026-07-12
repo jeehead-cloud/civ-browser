@@ -8,8 +8,8 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library` | Game Content Library | Library category list pattern | F4 | **Working** (Maps + Civilizations entry) |
 | `/library/maps` | Maps Catalog | Scenario-editor kit density (list/card) | F4 | **Working catalog** |
 | `/library/civilizations` | Civilizations Catalog | Same | F4 | **Working catalog** |
-| `/library/maps/current/edit` | World Editor (MVP) | `ui_kits/scenario-editor` (reference only) | F4 bridge; **F6** redesign | **Preserved MVP** + catalog bridge banner |
-| `/library/maps/:mapId/edit` | Target World Editor | scenario-editor kit | F5 / F6 | Not routed yet |
+| `/library/maps/:mapId/edit` | World Editor (selected map) | `ui_kits/scenario-editor` (reference only) | F5; **F6** redesign | **Working** load/save + dirty chrome |
+| `/library/maps/current/edit` | Scratch World Editor (MVP) | scenario-editor kit | Scratch fallback; **F6** redesign | **Preserved MVP** — not catalog-backed |
 | `/settings` | Settings & Balance | Panel + category nav (future) | F8 | **Styled placeholder** |
 | `/games/new` | New Game | Wizard shell (future) | F9 | **Styled placeholder** |
 | `/games/:gameId` | Active Game | `ui_kits/game-session` | F10 / F11 | **Styled placeholder** |
@@ -33,9 +33,9 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ### Maps `/library/maps`
 
-- Repository-backed catalog: search, create (blank ocean), import/export v1 JSON, duplicate, delete (confirm), open → temporary current editor bridge.
+- Repository-backed catalog: search, create (blank ocean), import/export v1 JSON, duplicate, delete (confirm), open → `/library/maps/:mapId/edit`.
 - Components: PageHeader, Input, Button, Card, Badge, EmptyState, Dialog, ConfirmDialog, FormField.
-- Deferred: `/library/maps/:mapId/edit` persistence (F5); mini-map thumbnails.
+- Deferred: mini-map thumbnails.
 
 ### Civilizations `/library/civilizations`
 
@@ -43,11 +43,12 @@ Maps product routes to Atlas / Design System references and foundation milestone
 - Components: same Atlas set as Maps catalog.
 - Deferred: traits / bonuses / AI config.
 
-### World Editor `/library/maps/current/edit`
+### World Editor `/library/maps/:mapId/edit`
 
-- Layout regions (target F6): top toolbar, tool rail, canvas, inspector — **not** implemented in D1/F4.
-- Current: Toolbar + MapCanvas + right panels + modals (unchanged).
-- F4: optional banner when a catalog map was loaded into legacy memory (no autosave to catalog).
+- F5: load selected MapTemplate; Save / Save As; dirty badge; leave confirm; Rename dialog.
+- Layout regions (target F6): top toolbar, tool rail, canvas, inspector — **not** redesigned.
+- Current tools: Toolbar + MapCanvas + right panels + modals (unchanged gameplay chrome).
+- Scratch: `/library/maps/current/edit` without catalog binding.
 - Full redesign: **F6**.
 
 ### Settings `/settings`

@@ -16,12 +16,22 @@ export {
 } from './editorBridgeCore'
 
 /**
- * Load a catalog MapTemplate into the legacy Zustand editor.
- * Does not write back to MapRepository (F5). Civilizations/settings stay as current editor state.
+ * Load a catalog MapTemplate into the legacy Zustand editor for F5 selected-map editing.
  */
 export function loadMapTemplateIntoEditor(map: MapTemplate): void {
   const payload = mapTemplateToEditorPayload(map)
-  useGameStore.getState().loadCatalogMapBridge(payload)
+  useGameStore.getState().loadSelectedCatalogMap({
+    tiles: payload.tiles,
+    cities: payload.cities,
+    catalogMapId: map.id,
+    catalogMapName: map.name,
+    catalogMapDescription: map.description,
+    catalogMapVersion: map.version,
+    catalogMapCreatedAt: map.createdAt,
+    width: map.width,
+    height: map.height,
+    lastSavedAt: map.updatedAt,
+  })
   writeCatalogBridgeMeta({
     mapId: map.id,
     mapName: map.name,

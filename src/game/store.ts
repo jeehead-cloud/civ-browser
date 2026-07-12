@@ -58,13 +58,40 @@ interface Store {
   endTurn: () => void
   exportMap: () => string
   importMap: (json: string) => { success: boolean; error?: string }
-  /** Temporary F4 bridge: load catalog map tiles/cities into legacy editor memory (no catalog write-back). */
+  /** F5: load selected catalog map into legacy editor (clears dirty). */
+  loadSelectedCatalogMap: (input: {
+    tiles: Record<string, Tile>
+    cities: City[]
+    catalogMapId: string
+    catalogMapName: string
+    catalogMapDescription: string
+    catalogMapVersion: number
+    catalogMapCreatedAt: string
+    width: number
+    height: number
+    lastSavedAt: string
+  }) => void
+  /** @deprecated F4 name — alias of loadSelectedCatalogMap with default meta. */
   loadCatalogMapBridge: (input: {
     tiles: Record<string, Tile>
     cities: City[]
     catalogMapId: string
     catalogMapName: string
   }) => void
+  clearCatalogEditorBinding: () => void
+  markEditorDirty: () => void
+  clearEditorDirty: () => void
+  setCatalogMapMeta: (updates: { name?: string; description?: string }) => void
+  activeCatalogMapId: string | null
+  activeCatalogMapName: string
+  activeCatalogMapDescription: string
+  activeCatalogMapVersion: number
+  activeCatalogMapCreatedAt: string | null
+  activeMapWidth: number
+  activeMapHeight: number
+  editorDirty: boolean
+  lastSavedAt: string | null
+  /** F4 compatibility mirror of active catalog id/name. */
   catalogBridge: { mapId: string; mapName: string } | null
 }
 
@@ -114,7 +141,39 @@ export const useGameStore = create<Store>((set, get) => ({
   gamePhase: 'setup',
   currentYear: 0,
   yearsPerTurn: 10,
+  activeCatalogMapId: null,
+  activeCatalogMapName: '',
+  activeCatalogMapDescription: '',
+  activeCatalogMapVersion: 1,
+  activeCatalogMapCreatedAt: null,
+  activeMapWidth: MAP_WIDTH,
+  activeMapHeight: MAP_HEIGHT,
+  editorDirty: false,
+  lastSavedAt: null,
   catalogBridge: null,
+  markEditorDirty: () => set({ editorDirty: true }),
+  clearEditorDirty: () => set({ editorDirty: false }),
+  setCatalogMapMeta: (updates) => {
+    set((s) => ({
+      activeCatalogMapName: updates.name ?? s.activeCatalogMapName,
+      activeCatalogMapDescription: updates.description ?? s.activeCatalogMapDescription,
+      catalogBridge: s.activeCatalogMapId
+        ? { mapId: s.activeCatalogMapId, mapName: updates.name ?? s.activeCatalogMapName }
+        : s.catalogBridge,
+      editorDirty: true,
+    }))
+  },
+  clearCatalogEditorBinding: () =>
+    set({
+      activeCatalogMapId: null,
+      activeCatalogMapName: '',
+      activeCatalogMapDescription: '',
+      activeCatalogMapVersion: 1,
+      activeCatalogMapCreatedAt: null,
+      editorDirty: false,
+      lastSavedAt: null,
+      catalogBridge: null,
+    }),
   paintAt: (centerKey) => {
     const { game, builder } = get()
     const centerTile = game.tiles[centerKey]
@@ -135,7 +194,7 @@ export const useGameStore = create<Store>((set, get) => ({
         const key = tileKey(tile.coord)
         updatedTiles[key] = { ...tile, hasHills: newValue }
       }
-      set({ game: { ...game, tiles: updatedTiles } })
+      set({ game: { ...game, tiles: updatedTiles }, editorDirty: true })
       return
     }
 
@@ -152,7 +211,7 @@ export const useGameStore = create<Store>((set, get) => ({
       updatedTiles[key] = updated
     }
 
-    set({ game: { ...game, tiles: updatedTiles } })
+    set({ game: { ...game, tiles: updatedTiles }, editorDirty: true })
   },
   regenerateMap: (seed) => {
     const { game } = get()
@@ -161,6 +220,9 @@ export const useGameStore = create<Store>((set, get) => ({
         ...game,
         tiles: generateProceduralMap({ width: MAP_WIDTH, height: MAP_HEIGHT }, seed ?? Date.now()),
       },
+      activeMapWidth: MAP_WIDTH,
+      activeMapHeight: MAP_HEIGHT,
+      editorDirty: true,
     })
   },
   generateEarthMap: (seed) => {
@@ -170,6 +232,9 @@ export const useGameStore = create<Store>((set, get) => ({
         ...game,
         tiles: generateEarthLikeMap({ width: MAP_WIDTH, height: MAP_HEIGHT }, seed ?? Date.now()),
       },
+      activeMapWidth: MAP_WIDTH,
+      activeMapHeight: MAP_HEIGHT,
+      editorDirty: true,
     })
   },
   setSelectedTerrain: (t) =>
@@ -203,6 +268,7 @@ export const useGameStore = create<Store>((set, get) => ({
         cities: [...game.cities, newCity],
         tiles: { ...game.tiles, [tileKey]: { ...tile, cityId } },
       },
+      editorDirty: true,
     })
   },
   removeCity: (tileKey) => {
@@ -216,6 +282,7 @@ export const useGameStore = create<Store>((set, get) => ({
         cities: game.cities.filter((c) => c.id !== cityId),
         tiles: { ...game.tiles, [tileKey]: { ...tile, cityId: null } },
       },
+      editorDirty: true,
     })
   },
   toggleRiverEdge: (centerKey, edgeIndex) => {
@@ -246,7 +313,7 @@ export const useGameStore = create<Store>((set, get) => ({
       updatedTiles[neighborKey] = { ...neighborTile, riverDirections: newNeighborDirections }
     }
 
-    set({ game: { ...game, tiles: updatedTiles } })
+    set({ game: { ...game, tiles: updatedTiles }, editorDirty: true })
   },
   addCivilization: (name, color, cultureName, flagEmoji) => {
     const { game } = get()
@@ -370,11 +437,11 @@ export const useGameStore = create<Store>((set, get) => ({
     })
   },
   exportMap: () => {
-    const { game } = get()
+    const { game, activeMapWidth, activeMapHeight } = get()
     const payload = {
       version: 1,
-      mapWidth: MAP_WIDTH,
-      mapHeight: MAP_HEIGHT,
+      mapWidth: activeMapWidth,
+      mapHeight: activeMapHeight,
       savedAt: new Date().toISOString(),
       tiles: game.tiles,
       cities: game.cities,
@@ -390,6 +457,10 @@ export const useGameStore = create<Store>((set, get) => ({
         return { success: false, error: 'Файл не похож на сохранённую карту (нет поля tiles).' }
       }
       const { game } = get()
+      const width =
+        Number.isInteger(parsed.mapWidth) && parsed.mapWidth > 0 ? parsed.mapWidth : get().activeMapWidth
+      const height =
+        Number.isInteger(parsed.mapHeight) && parsed.mapHeight > 0 ? parsed.mapHeight : get().activeMapHeight
       set({
         game: {
           ...game,
@@ -398,13 +469,16 @@ export const useGameStore = create<Store>((set, get) => ({
           civilizations: parsed.civilizations ?? game.civilizations,
           settings: parsed.settings ? { ...game.settings, ...parsed.settings } : game.settings,
         },
+        activeMapWidth: width,
+        activeMapHeight: height,
+        editorDirty: true,
       })
       return { success: true }
     } catch (e) {
       return { success: false, error: 'Не удалось разобрать JSON: файл повреждён или неверного формата.' }
     }
   },
-  loadCatalogMapBridge: (input) => {
+  loadSelectedCatalogMap: (input) => {
     const { game } = get()
     set({
       game: {
@@ -414,6 +488,15 @@ export const useGameStore = create<Store>((set, get) => ({
         turn: 1,
         units: [],
       },
+      activeCatalogMapId: input.catalogMapId,
+      activeCatalogMapName: input.catalogMapName,
+      activeCatalogMapDescription: input.catalogMapDescription,
+      activeCatalogMapVersion: input.catalogMapVersion,
+      activeCatalogMapCreatedAt: input.catalogMapCreatedAt,
+      activeMapWidth: input.width,
+      activeMapHeight: input.height,
+      editorDirty: false,
+      lastSavedAt: input.lastSavedAt,
       catalogBridge: { mapId: input.catalogMapId, mapName: input.catalogMapName },
       gamePhase: 'setup',
       viewMode: 'edit',
@@ -421,6 +504,17 @@ export const useGameStore = create<Store>((set, get) => ({
       addingCityAtKey: null,
       assigningCapitalForCivId: null,
       currentYear: 0,
+    })
+  },
+  loadCatalogMapBridge: (input) => {
+    get().loadSelectedCatalogMap({
+      ...input,
+      catalogMapDescription: '',
+      catalogMapVersion: 1,
+      catalogMapCreatedAt: new Date().toISOString(),
+      width: get().activeMapWidth,
+      height: get().activeMapHeight,
+      lastSavedAt: new Date().toISOString(),
     })
   },
 }))

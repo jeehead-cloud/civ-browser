@@ -1,38 +1,37 @@
-import { Link } from 'react-router-dom'
-import type { CSSProperties } from 'react'
 import { AppShell } from '../components/AppShell'
-
-const linkCardStyle: CSSProperties = {
-  display: 'block',
-  padding: '14px 16px',
-  marginBottom: 10,
-  border: '1px solid #cbd5e1',
-  borderRadius: 6,
-  background: '#fff',
-  textDecoration: 'none',
-  color: '#111',
-}
+import { Badge, CardLink, PageHeader, SectionHeader } from '../components/ui'
 
 export function LibraryHomePage() {
   return (
     <AppShell title="Game Content Library">
-      <h1 style={{ marginTop: 0 }}>Game Content Library</h1>
-      <p style={{ color: '#475569' }}>
-        Reusable content catalog. Only Maps and Civilizations are active in this foundation stage.
-      </p>
+      <PageHeader
+        eyebrow="Library"
+        title="Game Content Library"
+        description="Reusable templates for maps and civilizations. Only these two categories are active in the foundation stage."
+      />
 
-      <Link to="/library/maps" style={linkCardStyle}>
-        <strong>Maps</strong>
-        <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Map templates catalog (placeholder)</div>
-      </Link>
-      <Link to="/library/civilizations" style={linkCardStyle}>
-        <strong>Civilizations</strong>
-        <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Civilization templates catalog (placeholder)</div>
-      </Link>
+      <SectionHeader title="Active Categories" />
+      <div className="stack">
+        <CardLink to="/library/maps">
+          <strong>Maps</strong>
+          <p style={{ margin: 'var(--space-2) 0 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-size-sm)' }}>
+            Map template catalog · placeholder until F4
+          </p>
+        </CardLink>
+        <CardLink to="/library/civilizations">
+          <strong>Civilizations</strong>
+          <p style={{ margin: 'var(--space-2) 0 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-size-sm)' }}>
+            Civilization template catalog · placeholder until F4
+          </p>
+        </CardLink>
+      </div>
 
-      <p style={{ fontSize: 13, color: '#94a3b8', marginTop: 24 }}>
-        Planned later: Technologies, Units, Buildings, Great People, Actions, Scenarios — no routes yet.
-      </p>
+      <div style={{ marginTop: 'var(--space-8)' }}>
+        <SectionHeader title="Planned" action={<Badge tone="neutral">Later</Badge>} />
+        <p style={{ color: 'var(--text-disabled)', fontSize: 'var(--text-size-sm)', margin: 0 }}>
+          Technologies · Units · Buildings · Great People · Actions · Scenarios — no routes yet.
+        </p>
+      </div>
     </AppShell>
   )
 }

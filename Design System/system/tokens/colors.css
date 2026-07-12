@@ -1,0 +1,104 @@
+/* ==========================================================================
+   ATLAS — COLOR TOKENS
+   Base palette (raw values) + semantic aliases (what things mean).
+   Direction: graphite/tactical shell (HUD) warmed with a gold/amber accent
+   and cartographer-style ink tones for surfaces that need to feel "map-like".
+   ========================================================================== */
+
+:root {
+  /* ---- Base: neutrals (graphite → ink) ---- */
+  --gray-1: #0c0e10;   /* deepest canvas / map viewport behind everything */
+  --gray-2: #14171a;   /* app shell background */
+  --gray-3: #1c2024;   /* panel background */
+  --gray-4: #22262b;   /* raised panel / hover surface */
+  --gray-5: #2a2f34;   /* border, subtle divider */
+  --gray-6: #3a4149;   /* stronger border, input outline */
+  --gray-7: #565e66;   /* disabled text, faint icon */
+  --gray-8: #8a9199;   /* secondary text */
+  --gray-9: #c9cdd1;   /* primary text on dark */
+  --gray-10: #e8e6e1;  /* warm-white — headline text, brand wordmark */
+
+  /* ---- Base: accent — gold/amber (command actions, selection, brand) ---- */
+  --gold-1: #2b2210;
+  --gold-2: #4a3a17;
+  --gold-3: #8a661f;
+  --gold-4: #c9962f;   /* primary accent */
+  --gold-5: #e0b04a;
+  --gold-6: #f2cd7e;
+
+  /* ---- Base: accent — cyan (info, friendly units, links) ---- */
+  --cyan-1: #12292a;
+  --cyan-2: #1c4441;
+  --cyan-3: #2f7d74;
+  --cyan-4: #3fb6a8;
+  --cyan-5: #6fcfc3;
+
+  /* ---- Base: accent — rust/red (danger, hostile, destructive) ---- */
+  --red-1: #2a1512;
+  --red-2: #4a231d;
+  --red-3: #8a3a30;
+  --red-4: #c9564a;
+  --red-5: #e08074;
+
+  /* ---- Base: accent — olive (success, terrain, resources) ---- */
+  --olive-1: #1c2013;
+  --olive-2: #313a20;
+  --olive-3: #5c6b3a;
+  --olive-4: #8a9a5f;
+  --olive-5: #a8b982;
+
+  /* ================= Semantic aliases ================= */
+
+  /* Surfaces */
+  --surface-canvas: var(--gray-1);      /* map / editor viewport */
+  --surface-app: var(--gray-2);         /* window / app background */
+  --surface-panel: var(--gray-3);       /* default panel background */
+  --surface-panel-raised: var(--gray-4);/* hovered row, nested panel */
+  --surface-overlay: rgba(12, 14, 16, 0.72); /* modal scrim */
+  --surface-input: var(--gray-3);
+
+  /* Borders */
+  --border-subtle: var(--gray-5);
+  --border-default: var(--gray-6);
+  --border-strong: var(--gray-7);
+  --border-selected: var(--gold-4);
+  --border-focus: var(--gold-4);
+
+  /* Text */
+  --text-primary: var(--gray-10);
+  --text-secondary: var(--gray-9);
+  --text-tertiary: var(--gray-8);
+  --text-disabled: var(--gray-7);
+  --text-on-accent: var(--gray-1);
+  --text-link: var(--cyan-4);
+  --text-link-hover: var(--cyan-5);
+
+  /* Brand / accent */
+  --accent-primary: var(--gold-4);
+  --accent-primary-hover: var(--gold-5);
+  --accent-primary-active: var(--gold-3);
+  --accent-primary-muted: var(--gold-2);
+  --accent-primary-wash: var(--gold-1);
+
+  --accent-info: var(--cyan-4);
+  --accent-info-muted: var(--cyan-2);
+  --accent-info-wash: var(--cyan-1);
+
+  --accent-success: var(--olive-4);
+  --accent-success-muted: var(--olive-2);
+  --accent-success-wash: var(--olive-1);
+
+  --accent-danger: var(--red-4);
+  --accent-danger-hover: var(--red-5);
+  --accent-danger-muted: var(--red-2);
+  --accent-danger-wash: var(--red-1);
+
+  /* Status dots / factions (extendable) */
+  --faction-player: var(--cyan-4);
+  --faction-ally: var(--olive-4);
+  --faction-enemy: var(--red-4);
+  --faction-neutral: var(--gray-8);
+
+  /* Shadows (see effects.css for full system; kept here for co-location w/ color) */
+  --shadow-color: rgba(0, 0, 0, 0.55);
+}

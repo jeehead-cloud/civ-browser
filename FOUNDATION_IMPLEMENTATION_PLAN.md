@@ -169,6 +169,7 @@ Names may change during implementation, but responsibilities must remain separat
 | ID | Milestone | Outcome | Status |
 |---|---|---|---|
 | F1 | Application Shell and Routing | Separate screens and stable navigation | **Done** |
+| D1 | Design System Foundation (supporting) | Atlas tokens, UI primitives, shell/non-editor restyle; editor preserved for F6 | **Done** |
 | F2 | Domain Model Separation | Reusable templates and active sessions become distinct | Queued |
 | F3 | Persistence Abstraction | Local catalogs and game saves | Queued |
 | F4 | Content Library | Maps and civilizations become reusable catalog items | Queued |
@@ -247,6 +248,28 @@ The current application may initially be mounted unchanged inside the World Edit
 - new World Editor UI;
 - New Game logic;
 - Active Game redesign.
+
+---
+
+# 5.1. D1 — Design System Foundation (supporting task)
+
+**Status: Implemented** (between F1 and F2; not a replacement for any F-milestone).
+
+## Goal
+
+Translate the Claude-generated Atlas package under `Design System/` into maintainable production tokens, docs, and shell UI — without redesigning the World Editor (F6) or implementing F2+ domain work.
+
+## Deliverables
+
+- `docs/design/DESIGN_SYSTEM.md` and `docs/design/UI_SCREEN_MAP.md`;
+- `src/design-system/tokens.css` + `components.css`;
+- reusable primitives in `src/components/ui/`;
+- AppShell and non-editor routes restyled;
+- World Editor gameplay UI preserved.
+
+## Explicit non-goals
+
+- F2 domain separation; catalogs; IndexedDB; New Game wizard; Active Game logic; editor redesign.
 
 ---
 

@@ -1,0 +1,188 @@
+<!-- @dsCard group="Scenario Editor" viewport="1440x820" name="Scenario Editor" subtitle="Level authoring tool — tool rail, layers, canvas, inspector" -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Atlas — Scenario Editor</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  html,body{margin:0;height:100%;background:var(--surface-canvas);overflow:hidden;}
+  #root{height:100%;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { Button, IconButton, Panel, Checkbox, Select, Input, Tabs, Tooltip } = window.AtlasDesignSystem_b2128a;
+
+function toKebab(name) {
+  return name.replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/([A-Za-z])([0-9])/g, "$1-$2").toLowerCase();
+}
+
+function Icon({ name, size = 16 }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (ref.current && window.lucide) {
+      ref.current.innerHTML = "";
+      const i = document.createElement("i");
+      i.setAttribute("data-lucide", toKebab(name));
+      i.style.width = size + "px";
+      i.style.height = size + "px";
+      ref.current.appendChild(i);
+      window.lucide.createIcons({ icons: window.lucide.icons, attrs: { width: size, height: size, "stroke-width": 1.75 }, root: ref.current });
+    }
+  }, [name, size]);
+  return <span ref={ref} style={{display:"inline-flex", color:"inherit"}} />;
+}
+
+function TopToolbar({ scenarioName, setScenarioName }) {
+  return (
+    <div style={{
+      height: "var(--toolbar-height)", flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 16px", background: "var(--surface-app)", borderBottom: "1px solid var(--border-subtle)",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <span style={{ font: "var(--text-brand)", color: "var(--text-primary)" }}>Atlas</span>
+        <span style={{ font: "var(--text-body-sm)", color: "var(--text-tertiary)" }}>Editor</span>
+        <Input value={scenarioName} onChange={e=>setScenarioName(e.target.value)} size="sm" style={{ width: 180 }} />
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <IconButton title="Undo" icon={<Icon name="Undo2"/>} />
+        <IconButton title="Redo" icon={<Icon name="Redo2"/>} />
+        <div style={{ width: 1, height: 20, background: "var(--border-subtle)", margin: "0 6px" }} />
+        <Button size="sm" variant="secondary" icon={<Icon name="Play" size={13}/>}>Test Play</Button>
+        <Button size="sm" variant="primary" icon={<Icon name="Save" size={13}/>}>Save</Button>
+      </div>
+    </div>
+  );
+}
+
+function ToolRail({ tool, setTool }) {
+  const tools = [["select","MousePointer2"],["brush","Paintbrush"],["eraser","Eraser"],["stamp","Stamp"],["fill","PaintBucket"],["path","Route"]];
+  return (
+    <div style={{
+      width: 48, flexShrink: 0, background: "var(--surface-app)", borderRight: "1px solid var(--border-subtle)",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", padding: "10px 0",
+    }}>
+      {tools.map(([key, icon]) => (
+        <Tooltip key={key} label={key[0].toUpperCase()+key.slice(1)} side="right">
+          <IconButton icon={<Icon name={icon}/>} active={tool===key} onClick={()=>setTool(key)} />
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
+
+function LayerList({ layers, active, setActive }) {
+  return (
+    <Panel title="Layers" width="100%">
+      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        {layers.map(l => (
+          <div key={l.id}
+            onClick={() => setActive(l.id)}
+            style={{
+              display: "flex", alignItems: "center", gap: "8px", padding: "6px 8px",
+              borderRadius: "var(--radius-sm)",
+              background: active === l.id ? "var(--accent-primary-wash)" : "transparent",
+              cursor: "pointer",
+            }}>
+            <Checkbox checked={l.visible} onChange={()=>{}} />
+            <Icon name={l.icon} size={14} />
+            <span style={{ flex: 1, font: "var(--text-body-sm)", color: active === l.id ? "var(--accent-primary)" : "var(--text-secondary)" }}>{l.name}</span>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+function CanvasArea({ tool }) {
+  const cols = 22, rows = 14;
+  const palette = ["var(--olive-2)", "var(--olive-3)", "var(--gray-4)", "var(--gold-2)"];
+  const tiles = [];
+  for (let i = 0; i < cols * rows; i++) tiles.push(<div key={i} style={{ background: palette[(i*29)%palette.length], border: "1px solid rgba(0,0,0,0.15)" }} />);
+  return (
+    <div style={{ flex: 1, position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{
+        width: "92%", height: "92%", display: "grid",
+        gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)`,
+        boxShadow: "var(--shadow-lg)", borderRadius: "var(--radius-sm)", overflow: "hidden",
+      }}>
+        {tiles}
+      </div>
+      <div style={{ position: "absolute", left: 16, bottom: 12, font: "var(--text-data-sm)", color: "var(--text-tertiary)" }}>
+        Tool: {tool} · Zoom 100%
+      </div>
+    </div>
+  );
+}
+
+function Inspector({ tab, setTab }) {
+  return (
+    <Panel title="Properties" width="260px">
+      <Tabs items={[{value:"tile",label:"Tile"},{value:"scenario",label:"Scenario"}]} value={tab} onChange={setTab} />
+      <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: "10px" }}>
+        {tab === "tile" ? (
+          <>
+            <Field label="Terrain"><Select value="forest" onChange={()=>{}} options={[{value:"forest",label:"Forest"},{value:"water",label:"Water"},{value:"hill",label:"Hill"}]} /></Field>
+            <Field label="Elevation"><Input value="3" onChange={()=>{}} size="sm" /></Field>
+            <Field label="Passable"><Checkbox checked={true} onChange={()=>{}} /></Field>
+          </>
+        ) : (
+          <>
+            <Field label="Name"><Input value="Highland Siege" onChange={()=>{}} size="sm" /></Field>
+            <Field label="Victory Condition"><Select value="conquest" onChange={()=>{}} options={[{value:"conquest",label:"Conquest"},{value:"survival",label:"Survival"}]} /></Field>
+            <Field label="Fog of War"><Checkbox checked={true} onChange={()=>{}} /></Field>
+          </>
+        )}
+      </div>
+    </Panel>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      <span style={{ font: "var(--text-label)", letterSpacing: "var(--text-tracking-wide)", textTransform: "uppercase", color: "var(--text-tertiary)" }}>{label}</span>
+      {children}
+    </div>
+  );
+}
+
+function Demo() {
+  const [tool, setTool] = React.useState("brush");
+  const [scenarioName, setScenarioName] = React.useState("Highland Siege");
+  const [tab, setTab] = React.useState("tile");
+  const [active, setActive] = React.useState("terrain");
+  const layers = [
+    { id: "terrain", name: "Terrain", icon: "Mountain", visible: true },
+    { id: "units", name: "Units", icon: "Swords", visible: true },
+    { id: "resources", name: "Resources", icon: "Wheat", visible: true },
+    { id: "triggers", name: "Triggers", icon: "Zap", visible: false },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <TopToolbar scenarioName={scenarioName} setScenarioName={setScenarioName} />
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        <ToolRail tool={tool} setTool={setTool} />
+        <div style={{ width: 220, flexShrink: 0, borderRight: "1px solid var(--border-subtle)", padding: 10, background: "var(--surface-app)" }}>
+          <LayerList layers={layers} active={active} setActive={setActive} />
+        </div>
+        <CanvasArea tool={tool} />
+        <div style={{ width: 280, flexShrink: 0, borderLeft: "1px solid var(--border-subtle)", padding: 10, background: "var(--surface-app)" }}>
+          <Inspector tab={tab} setTab={setTab} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+</script>
+</body>
+</html>

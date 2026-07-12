@@ -1,66 +1,52 @@
 import { useState } from 'react'
-import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
-
-const actionButtonStyle: CSSProperties = {
-  display: 'block',
-  width: '100%',
-  textAlign: 'left',
-  padding: '14px 16px',
-  marginBottom: 10,
-  fontSize: 16,
-  border: '1px solid #cbd5e1',
-  borderRadius: 6,
-  background: '#fff',
-  cursor: 'pointer',
-  color: '#111',
-  textDecoration: 'none',
-  boxSizing: 'border-box',
-}
+import { Badge, Button, CardLink, EmptyState, PageHeader, SectionHeader } from '../components/ui'
 
 export function MainMenuPage() {
   const [continueNote, setContinueNote] = useState(false)
 
   return (
     <AppShell title="Main Menu">
-      <h1 style={{ marginTop: 0 }}>Civ Browser</h1>
-      <p style={{ color: '#475569', marginBottom: 24 }}>
-        Browser-based Civilization-inspired sandbox. Build maps, define civilizations, and step through turns.
-      </p>
+      <PageHeader
+        eyebrow="Civ Browser"
+        title="Command Deck"
+        description="Build maps, define civilizations, and step through turns. The Atlas shell keeps the world readable while chrome stays quiet."
+      />
 
-      <div style={{ marginBottom: 28 }}>
-        <button type="button" style={actionButtonStyle} onClick={() => setContinueNote(true)}>
+      <SectionHeader title="Primary Actions" />
+      <div className="stack" style={{ marginBottom: 'var(--space-9)' }}>
+        <Button variant="secondary" size="lg" block onClick={() => setContinueNote(true)}>
           Continue Game
-        </button>
+        </Button>
         {continueNote && (
-          <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 16px', padding: '8px 12px', background: '#f1f5f9', borderRadius: 4 }}>
-            Saved game sessions will be available in a later foundation milestone (F3 / F9 / F10). There is nothing to resume yet.
-          </p>
+          <EmptyState title="No saved sessions" milestone="F3 / F9 / F10">
+            Saved game sessions will appear here after local persistence and the New Game wizard exist. There is nothing to resume yet.
+          </EmptyState>
         )}
-        <Link to="/games/new" style={actionButtonStyle}>
+        <Link to="/games/new" className="ui-button ui-button--primary ui-button--lg ui-button--block">
           New Game
         </Link>
-        <Link to="/library" style={actionButtonStyle}>
+        <Link to="/library" className="ui-button ui-button--secondary ui-button--lg ui-button--block">
           Game Content Library
         </Link>
-        <Link to="/settings" style={actionButtonStyle}>
+        <Link to="/settings" className="ui-button ui-button--secondary ui-button--lg ui-button--block">
           Settings &amp; Balance
         </Link>
       </div>
 
-      <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
-        <h3 style={{ fontSize: 14, color: '#64748b', marginBottom: 8 }}>Temporary development entry</h3>
-        <Link
-          to="/library/maps/current/edit"
-          style={{ ...actionButtonStyle, borderStyle: 'dashed', background: '#f8fafc' }}
-        >
-          Open Current World Editor
-        </Link>
-        <p style={{ fontSize: 12, color: '#94a3b8', margin: 0 }}>
-          Opens the existing MVP editor until maps become catalog items (F4 / F5).
-        </p>
-      </div>
+      <SectionHeader title="Development Entry" action={<Badge tone="warning">Temporary</Badge>} />
+      <CardLink to="/library/maps/current/edit">
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-4)', alignItems: 'center' }}>
+          <div>
+            <strong style={{ fontFamily: 'var(--font-sans)' }}>Open Current World Editor</strong>
+            <p style={{ margin: 'var(--space-2) 0 0', color: 'var(--text-tertiary)', fontSize: 'var(--text-size-sm)' }}>
+              Existing MVP editor until maps become catalog items (F4 / F5).
+            </p>
+          </div>
+          <Badge tone="info">F1 Bridge</Badge>
+        </div>
+      </CardLink>
     </AppShell>
   )
 }

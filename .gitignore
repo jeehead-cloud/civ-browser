@@ -3,3 +3,14 @@ dist
 .DS_Store
 tsconfig.tsbuildinfo
 *.zip
+
+# Claude Design generated internals
+Design System/system/_exploration/
+Design System/system/_ds_bundle.js
+Design System/system/_ds_manifest
+Design System/system/_ds_manifest.json
+Design System/system/_adherence.oxlintrc
+Design System/system/_adherence.oxlintrc.json
+Design System/examples/_ds/
+Design System/examples/.thumbnail
+Design System/examples/support.js

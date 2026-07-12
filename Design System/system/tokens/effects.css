@@ -1,0 +1,26 @@
+/* ==========================================================================
+   ATLAS — EFFECTS TOKENS
+   Shadows are dark & tight (panels sit ON a viewport, not floating far above it).
+   No glassmorphism/blur except a single overlay/scrim use-case. No gradients on
+   surfaces — reserve gradient for map fog-of-war / minimap edges only.
+   ========================================================================== */
+
+:root {
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-focus: 0 0 0 2px var(--surface-app), 0 0 0 4px var(--accent-primary);
+  --shadow-inset-line: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  --blur-scrim: blur(2px); /* @kind other */
+
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1); /* @kind other */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* @kind other */
+  --duration-fast: 100ms; /* @kind other */
+  --duration-normal: 160ms; /* @kind other */
+  --duration-slow: 240ms; /* @kind other */
+
+  /* Map-only decorative gradients (fog of war, minimap vignette) */
+  --gradient-fog-edge: linear-gradient(to bottom, rgba(12,14,16,0) 0%, rgba(12,14,16,0.9) 100%); /* @kind other */
+  --gradient-vignette: radial-gradient(circle at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%); /* @kind other */
+}

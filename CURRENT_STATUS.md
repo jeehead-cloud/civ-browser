@@ -17,9 +17,9 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1 (Application Shell and Routing) is implemented.** The app opens on a Main Menu; the existing World Builder MVP lives at `/library/maps/current/edit`. Domain templates, IndexedDB, catalogs, and New Game wizard are not started (F2+).
+**F1 (Application Shell and Routing) is implemented.** **D1 (Design System Foundation) is implemented** as a supporting task between F1 and F2: Atlas tokens, shell/UI primitives, and restyled non-editor screens. The World Editor gameplay UI is deliberately preserved for F6.
 
-There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8), after the foundation batch.
+Domain templates, IndexedDB, catalogs, and New Game wizard are not started (F2+). There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8), after the foundation batch.
 
 ---
 
@@ -29,8 +29,22 @@ There is no human-controlled civilization and no units/combat/AI yet — those r
 
 Implemented:
 - React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations placeholders, Settings & Balance placeholder, New Game placeholder, Active Game placeholder (`/games/:gameId` shows route id only), and not-found.
-- Existing editor UI mounted unchanged at `/library/maps/current/edit` (temporary path until map catalog / F5).
-- Minimal `AppShell` for non-editor screens; editor uses full viewport with a slim Main Menu link strip.
+- Existing editor UI mounted at `/library/maps/current/edit` (temporary path until map catalog / F5).
+- `AppShell` for non-editor screens; editor uses full viewport with a slim Main Menu link strip.
+
+### D1 — Design System Foundation (Done — supporting task)
+
+Implemented:
+- Stable docs: `docs/design/DESIGN_SYSTEM.md`, `docs/design/UI_SCREEN_MAP.md`.
+- Tokens: `src/design-system/tokens.css`; primitive styles: `src/design-system/components.css`.
+- UI primitives under `src/components/ui/`: Button, IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState.
+- AppShell and all non-editor routes restyled to Atlas (dark graphite + gold); placeholders clearly marked.
+- World Editor tools/panels/canvas/gameplay unchanged; only slim chrome + local light isolation for editor chrome.
+
+Not done in D1 (deferred):
+- Full World Editor redesign → **F6**.
+- Real catalog/settings/new-game/active-game behavior → F4–F10.
+- Lucide icon pack / logo assets (no production assets copied yet; `src/assets/design-system/` reserved).
 
 ### F2–F12 — Not started
 
@@ -132,7 +146,7 @@ Not started. The only "AI" behavior that exists today is the deterministic neare
 
 1. **F2 — Domain Model Separation** (MapTemplate, CivilizationTemplate, GameSession, rules preset types; keep MVP working).
 2. **F3 — Persistence Abstraction** (IndexedDB repositories).
-3. Then F4 Content Library / F5 editor migration; M5 event log remains open on the gameplay side but foundation structure is the priority.
+3. Then F4 Content Library / F5 editor migration; World Editor visual redesign remains **F6**; M5 event log remains open on the gameplay side but foundation structure is the priority.
 
 ---
 
@@ -163,6 +177,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 ## 7. Recent Change Log — Rolling 3 Months
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
+
+### 2026-07-12 — D1 Design System Foundation
+
+- Classification: Significant
+- Summary: Extracted Atlas design tokens and docs from `Design System/`; added reusable UI primitives; restyled AppShell and all non-editor routes; preserved World Editor gameplay UI (F6 redesign deferred). No F2+ domain/persistence work.
+- Files: `src/design-system/*`, `src/components/ui/*`, `src/components/AppShell.tsx`, `src/pages/*`, `src/main.tsx`, `src/styles/index.css`, `src/assets/design-system/README.md`, `docs/design/*`, `ARCHITECTURE.md`, `CURRENT_STATUS.md`, `PROJECT.md`, `FOUNDATION_IMPLEMENTATION_PLAN.md`
+- Validation: `npm run build` PASS; `git diff --check` PASS; SPA routes + Not Found PASS in preview; World Editor open/canvas/paint/View tile info/civs/Play chrome PASS; pan/zoom wheel gestures not exhaustively exercised; keyboard focus reviewed via CSS focus tokens on shell buttons
 
 ### 2026-07-11 — F1 application shell and routing
 
@@ -197,6 +218,13 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 ## 8. Significant Change History — Permanent
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
+
+### 2026-07-12 — D1 Design System Foundation
+
+- Area: Architecture / Product UX
+- Change: Civ Browser now has a durable Atlas-derived design layer (tokens, docs, shell primitives) applied to the F1 application shell and non-editor screens. Generated Claude materials under `Design System/` remain reference-only; production code lives in `src/design-system/` and `src/components/ui/`. World Editor visual redesign remains F6.
+- Reason: Establishes a single visual language for product screens before F2+ work without rewriting the working editor.
+- Source of truth: `docs/design/DESIGN_SYSTEM.md`, `docs/design/UI_SCREEN_MAP.md`, `ARCHITECTURE.md` §2.1
 
 ### 2026-07-11 — F1 application shell and routing
 

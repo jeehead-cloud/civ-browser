@@ -182,6 +182,8 @@ Cursor prompts in this project are scoped to one logical change at a time (e.g. 
 - **`PRODUCT_STRUCTURE.md`** — target product areas, screens, flows, and UI behavior after the proof-of-concept stage.
 - **`FOUNDATION_IMPLEMENTATION_PLAN.md`** — foundation milestones (F1–F12), acceptance criteria, and implementation sequence.
 - **`ARCHITECTURE.md`** — tech stack, file structure, data model, hex grid math, key algorithmic lessons learned.
+- **`docs/design/DESIGN_SYSTEM.md`** — Atlas design rules translated for production (tokens, components, states).
+- **`docs/design/UI_SCREEN_MAP.md`** — route ↔ mockup map and D1 vs later milestone ownership.
 - **`DEPLOYMENT.md`** — current (currently empty/local-only) deployment state and what will need deciding before shipping anywhere.
 - **`PRODUCT_RULES.md`** — game design invariants: terrain/resource/growth/culture/annexation rules that must stay consistent.
 - **`CURRENT_STATUS.md`** — frequently updated snapshot: what's implemented per milestone, known bugs/limitations, next steps.
@@ -195,7 +197,8 @@ Cursor prompts in this project are scoped to one logical change at a time (e.g. 
 5. `FOUNDATION_IMPLEMENTATION_PLAN.md`
 6. `PRODUCT_RULES.md`
 7. `ARCHITECTURE.md`
-8. `DEPLOYMENT.md`
+8. `docs/design/DESIGN_SYSTEM.md` / `docs/design/UI_SCREEN_MAP.md` (when doing UI work)
+9. `DEPLOYMENT.md`
 
 ## 12. Source-of-Truth Hierarchy
 

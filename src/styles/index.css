@@ -2,24 +2,29 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #111;
+  background: var(--surface-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   margin: 0 0 8px 0;
-}
-
-a {
-  color: #2563eb;
-}
-
-a:hover {
-  color: #1d4ed8;
 }
 
 button {
   font-family: inherit;
 }
+
+/* Do not set global `a` colors — editor panels use native light chrome.
+   Shell links are scoped under `.app-shell`. */

@@ -172,7 +172,7 @@ The World Editor follows the structure and interaction model of the Civilization
 
 The map occupies most of the screen.
 
-**Current editor routes:** catalog maps open at `/library/maps/:mapId/edit` with repository load/save (F5). Scratch MVP remains at `/library/maps/current/edit` without catalog binding.
+**Current editor routes:** catalog maps open at `/library/maps/:mapId/edit` with repository load/save (F5). Scratch MVP remains at `/library/maps/current/edit` without catalog binding. **F6** implements the top command bar + map + right-panel layout (Tiles / Cities / Display); temporary Simulation access holds legacy setup/play panels until F8–F10.
 
 ### 6.1. Top Menu
 

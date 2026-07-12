@@ -8,8 +8,8 @@ Maps product routes to Atlas / Design System references and foundation milestone
 | `/library` | Game Content Library | Library category list pattern | F4 | **Working** (Maps + Civilizations entry) |
 | `/library/maps` | Maps Catalog | Scenario-editor kit density (list/card) | F4 | **Working catalog** |
 | `/library/civilizations` | Civilizations Catalog | Same | F4 | **Working catalog** |
-| `/library/maps/:mapId/edit` | World Editor (selected map) | `ui_kits/scenario-editor` (reference only) | F5; **F6** redesign | **Working** load/save + dirty chrome |
-| `/library/maps/current/edit` | Scratch World Editor (MVP) | scenario-editor kit | Scratch fallback; **F6** redesign | **Preserved MVP** — not catalog-backed |
+| `/library/maps/:mapId/edit` | World Editor (selected map) | `ui_kits/scenario-editor` (reference) | F5+F6 | **Working** F6 layout + F5 load/save |
+| `/library/maps/current/edit` | Scratch World Editor | scenario-editor kit | Scratch + F6 layout | **Working** same shell; not catalog-backed |
 | `/settings` | Settings & Balance | Panel + category nav (future) | F8 | **Styled placeholder** |
 | `/games/new` | New Game | Wizard shell (future) | F9 | **Styled placeholder** |
 | `/games/:gameId` | Active Game | `ui_kits/game-session` | F10 / F11 | **Styled placeholder** |
@@ -45,15 +45,15 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ### World Editor `/library/maps/:mapId/edit`
 
-- F5: load selected MapTemplate; Save / Save As; dirty badge; leave confirm; Rename dialog.
-- Layout regions (target F6): top toolbar, tool rail, canvas, inspector — **not** redesigned.
-- Current tools: Toolbar + MapCanvas + right panels + modals (unchanged gameplay chrome).
-- Scratch: `/library/maps/current/edit` without catalog binding.
-- Full redesign: **F6**.
+- F5: load selected MapTemplate; Save / Save As; dirty badge; leave confirm; Map Description dialog.
+- F6 layout: top command bar + dominant map + right panel (Tiles / Cities / Display / temporary Sim).
+- No permanent left toolbar. View/Edit switch; display layers/presets (non-dirty).
+- Deferred to F7+: random/clear-all generation ops; Resize; Mini-map; improvements/roads/labels models.
+- Scratch: `/library/maps/current/edit` — same F6 shell; Save disabled; Save As may create catalog item.
 
 ### Settings `/settings`
 
-- Placeholder until rules presets (F8). Live settings remain in editor sidebar.
+- Placeholder until rules presets (F8). Temporary live settings remain under editor Sim section.
 
 ### New Game `/games/new`
 
@@ -69,6 +69,6 @@ Maps product routes to Atlas / Design System references and foundation milestone
 
 ---
 
-## Explicitly deferred from D1
+## Explicitly deferred from D1 / remaining after F6
 
-Units, combat, diplomacy, tech trees, real catalogs, persistence, editor layer tools, Lucide icon wiring, Dialog/Toast/Tooltip primitives.
+Units, combat, diplomacy, tech trees, F7 layer generation, Lucide icon wiring, Toast/Tooltip primitives, final Active Game HUD.

@@ -1,18 +1,19 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { MapCanvas } from '../components/MapCanvas'
-import { Toolbar } from '../components/Toolbar'
 import { CityModal } from '../components/CityModal'
 import { TileInfoPanel } from '../components/TileInfoPanel'
-import { CivilizationsPanel } from '../components/CivilizationsPanel'
-import { SettingsPanel } from '../components/SettingsPanel'
-import { PlayControlPanel } from '../components/PlayControlPanel'
-import { PlayersPanel } from '../components/PlayersPanel'
+import { EditorCommandBar } from '../components/editor/EditorCommandBar'
+import {
+  EditorPanelSection,
+  EditorRightPanel,
+} from '../components/editor/EditorRightPanel'
 import { Badge, Button, ConfirmDialog, Dialog, EmptyState, FormField, Input } from '../components/ui'
 import { useSelectedMapEditor } from '../catalog/hooks/useSelectedMapEditor'
+import { useGameStore } from '../game/store'
 
 function formatSavedAt(iso: string | null): string {
-  if (!iso) return 'Never'
+  if (!iso) return 'never'
   try {
     return new Date(iso).toLocaleString()
   } catch {
@@ -20,15 +21,22 @@ function formatSavedAt(iso: string | null): string {
   }
 }
 
-/** Existing MVP World Editor — F5 selected-map load/save; visual redesign remains F6. */
+/** World Editor — F6 command bar + map + right panel; F5 persistence preserved. */
 export function WorldEditorPage() {
   const { mapId } = useParams<{ mapId: string }>()
   const editor = useSelectedMapEditor(mapId)
+  const exportMap = useGameStore((s) => s.exportMap)
+  const importMap = useGameStore((s) => s.importMap)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const [metaOpen, setMetaOpen] = useState(false)
   const [saveAsOpen, setSaveAsOpen] = useState(false)
   const [metaName, setMetaName] = useState('')
   const [metaDescription, setMetaDescription] = useState('')
   const [saveAsName, setSaveAsName] = useState('')
+  const [saveAsDescription, setSaveAsDescription] = useState('')
+  const [panelSection, setPanelSection] = useState<EditorPanelSection>('tiles')
+  const [panelOpen, setPanelOpen] = useState(true)
 
   if (!editor.isScratch && editor.status === 'loading') {
     return (
@@ -84,61 +92,79 @@ export function WorldEditorPage() {
   }
 
   const titleName = editor.isScratch
-    ? 'Scratch editor'
+    ? 'Scratch Map'
     : editor.activeCatalogMapName || 'Untitled map'
 
+  function handleExportJson() {
+    const json = exportMap()
+    const blob = new Blob([json], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    a.href = url
+    a.download = `civ-map-${timestamp}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = importMap(reader.result as string)
+      if (!result.success) {
+        editor.setSaveError('Import failed: ' + (result.error ?? 'unknown'))
+        window.alert('Import failed: ' + result.error)
+      } else {
+        editor.setSaveNotice('Imported JSON — save to persist to catalog.')
+        editor.setSaveError(null)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'var(--font-sans)' }}>
-      <div className="world-editor-chrome">
-        <Link to="/">← Main Menu</Link>
-        <span style={{ color: 'var(--border-strong)' }}>|</span>
-        <Link to="/library/maps">Maps Catalog</Link>
-        <span style={{ color: 'var(--border-strong)' }}>|</span>
-        <span>
-          {editor.isScratch ? 'Current World Editor · scratch (not catalog-backed)' : `Editing · ${titleName}`}
-        </span>
-        {!editor.isScratch ? (
-          <>
-            <span style={{ color: 'var(--border-strong)' }}>|</span>
-            <Badge tone={editor.editorDirty ? 'warning' : 'success'}>
-              {editor.editorDirty ? 'Unsaved changes' : 'Saved'}
-            </Badge>
-            <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-size-xs)' }}>
-              Last saved: {formatSavedAt(editor.lastSavedAt)}
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setMetaName(editor.activeCatalogMapName)
-                setMetaDescription(editor.activeCatalogMapDescription)
-                setMetaOpen(true)
-              }}
-            >
-              Rename
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={editor.saving || !editor.editorDirty}
-              onClick={() => void editor.save().catch(() => undefined)}
-            >
-              Save
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={editor.saving}
-              onClick={() => {
-                setSaveAsName(`${editor.activeCatalogMapName} Copy`)
-                setSaveAsOpen(true)
-              }}
-            >
-              Save As
-            </Button>
-          </>
-        ) : null}
-      </div>
+    <div className="world-editor-shell">
+      <EditorCommandBar
+        isScratch={editor.isScratch}
+        mapName={titleName}
+        dirty={editor.editorDirty}
+        lastSavedLabel={formatSavedAt(editor.lastSavedAt)}
+        saving={editor.saving}
+        onSave={() => void editor.save().catch(() => undefined)}
+        onSaveAs={() => {
+          setSaveAsName(
+            editor.isScratch
+              ? 'New map'
+              : `${editor.activeCatalogMapName || 'Map'} Copy`,
+          )
+          setSaveAsDescription(editor.activeCatalogMapDescription)
+          setSaveAsOpen(true)
+        }}
+        onMapDescription={() => {
+          setMetaName(editor.activeCatalogMapName)
+          setMetaDescription(editor.activeCatalogMapDescription)
+          setMetaOpen(true)
+        }}
+        onImportJson={() => fileInputRef.current?.click()}
+        onExportJson={handleExportJson}
+        onFocusDisplay={() => {
+          setPanelOpen(true)
+          setPanelSection('display')
+        }}
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        style={{ display: 'none' }}
+        onChange={handleFileSelected}
+      />
 
       {editor.saveNotice ? (
         <div className="catalog-bridge-banner" role="status">
@@ -152,29 +178,36 @@ export function WorldEditorPage() {
       ) : null}
       {editor.isScratch ? (
         <div className="catalog-bridge-banner" role="status">
-          Scratch editor — open a map from the Maps Catalog to save into IndexedDB. Changes here are not catalog-backed.
+          Scratch Map — Save is disabled (cannot overwrite an unrelated catalog item). Use Save As to create a
+          catalog map, or open a map from the catalog.
         </div>
       ) : null}
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0, background: '#f8fafc', color: '#111' }}>
-        <Toolbar />
-        <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
-          <h2 style={{ marginTop: 0 }}>Civ Browser — World Builder (MVP)</h2>
+      <div className="world-editor-body">
+        <div className="world-editor-map-column">
+          <div className="world-editor-map-toolbar-mobile">
+            <Button variant="secondary" size="sm" onClick={() => setPanelOpen((v) => !v)}>
+              {panelOpen ? 'Hide tools' : 'Show tools'}
+            </Button>
+            {!editor.isScratch ? (
+              <Badge tone={editor.editorDirty ? 'warning' : 'success'}>
+                {editor.editorDirty ? 'Unsaved' : 'Saved'}
+              </Badge>
+            ) : null}
+          </div>
           <MapCanvas />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
-          <CivilizationsPanel />
-          <PlayControlPanel />
-          <PlayersPanel />
-          <SettingsPanel />
-        </div>
+        {panelOpen ? (
+          <EditorRightPanel activeSection={panelSection} onSectionChange={setPanelSection} />
+        ) : null}
       </div>
+
       <CityModal />
       <TileInfoPanel />
 
       <Dialog
         open={metaOpen}
-        title="Map details"
+        title="Map Description"
         onClose={() => setMetaOpen(false)}
         footer={
           <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
@@ -184,8 +217,12 @@ export function WorldEditorPage() {
             <Button
               variant="primary"
               size="md"
+              disabled={!metaName.trim()}
               onClick={() => {
-                editor.setCatalogMapMeta({ name: metaName, description: metaDescription })
+                editor.setCatalogMapMeta({
+                  name: metaName.trim(),
+                  description: metaDescription,
+                })
                 setMetaOpen(false)
               }}
             >
@@ -195,7 +232,12 @@ export function WorldEditorPage() {
         }
       >
         <FormField label="Name" htmlFor="editor-map-name">
-          <Input id="editor-map-name" value={metaName} onChange={(e) => setMetaName(e.target.value)} autoFocus />
+          <Input
+            id="editor-map-name"
+            value={metaName}
+            onChange={(e) => setMetaName(e.target.value)}
+            autoFocus
+          />
         </FormField>
         <FormField label="Description" htmlFor="editor-map-desc">
           <textarea
@@ -205,6 +247,13 @@ export function WorldEditorPage() {
             onChange={(e) => setMetaDescription(e.target.value)}
           />
         </FormField>
+        {editor.isScratch ? (
+          <p className="world-editor-field__hint">
+            Scratch metadata is local until Save As creates a catalog item.
+          </p>
+        ) : (
+          <p className="world-editor-field__hint">Marks the editor dirty; Save persists to the catalog.</p>
+        )}
       </Dialog>
 
       <Dialog
@@ -222,7 +271,7 @@ export function WorldEditorPage() {
               disabled={editor.saving || !saveAsName.trim()}
               onClick={() =>
                 void editor
-                  .saveAs(saveAsName.trim())
+                  .saveAs(saveAsName.trim(), saveAsDescription)
                   .then(() => setSaveAsOpen(false))
                   .catch(() => undefined)
               }
@@ -238,6 +287,14 @@ export function WorldEditorPage() {
             value={saveAsName}
             onChange={(e) => setSaveAsName(e.target.value)}
             autoFocus
+          />
+        </FormField>
+        <FormField label="Description" htmlFor="editor-save-as-desc">
+          <textarea
+            id="editor-save-as-desc"
+            className="ui-textarea"
+            value={saveAsDescription}
+            onChange={(e) => setSaveAsDescription(e.target.value)}
           />
         </FormField>
       </Dialog>

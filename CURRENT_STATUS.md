@@ -17,7 +17,7 @@
 
 The project has a working MVP gameplay loop (map editing → civilizations → turns → growth/culture/annexation) and has started the **foundation restructuring** described in `PRODUCT_STRUCTURE.md` / `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
-**F1–F5 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), and selected-map editor load/save at `/library/maps/:mapId/edit` (F5). Scratch editor remains at `/library/maps/current/edit`. Settings / New Game / Active Game are still placeholders (F6+).
+**F1–F6 foundation work is in place:** shell/routing (F1), Atlas design system (D1), domain types (F2), IndexedDB repositories (F3), Maps/Civilizations catalogs (F4), selected-map editor persistence (F5), and World Editor IA restructure (F6: command bar + map + right panel). Scratch editor remains at `/library/maps/current/edit`. Settings / New Game / Active Game are still placeholders (F7+).
 
 There is no human-controlled civilization and no units/combat/AI yet — those remain later gameplay milestones (M6–M8).
 
@@ -30,19 +30,18 @@ There is no human-controlled civilization and no units/combat/AI yet — those r
 Implemented:
 - React Router (`react-router-dom`) with Main Menu, Library, Maps/Civilizations catalogs, Settings & Balance placeholder, New Game placeholder, Active Game placeholder (`/games/:gameId` shows route id only), and not-found.
 - Existing editor UI at `/library/maps/:mapId/edit` (catalog) and `/library/maps/current/edit` (scratch).
-- `AppShell` for non-editor screens; editor uses full viewport with a slim chrome strip.
+- `AppShell` for non-editor screens; editor uses full-viewport F6 shell.
 
 ### D1 — Design System Foundation (Done — supporting task)
 
 Implemented:
 - Stable docs: `docs/design/DESIGN_SYSTEM.md`, `docs/design/UI_SCREEN_MAP.md`.
 - Tokens: `src/design-system/tokens.css`; primitive styles: `src/design-system/components.css`.
-- UI primitives under `src/components/ui/`: Button, IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog, ConfirmDialog, FormField.
+- UI primitives under `src/components/ui/`: Button, IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog, ConfirmDialog, FormField, Accordion, SegmentedControl.
 - AppShell and non-editor routes use Atlas (dark graphite + gold).
-- World Editor tools/panels/canvas/gameplay unchanged; slim chrome + local light isolation for editor chrome.
+- World Editor uses Atlas command-bar / right-panel chrome (F6).
 
 Not done in D1 (deferred):
-- Full World Editor redesign → **F6**.
 - Lucide icon pack / logo assets (no production assets copied yet; `src/assets/design-system/` reserved).
 
 ### F2 — Domain Model Separation (Done)
@@ -53,7 +52,7 @@ Implemented:
 - Focused verification: `npm run verify:domain`.
 
 Still legacy (intentionally):
-- Zustand `GameState` / editor / turn engine / v1 JSON import-export in the editor toolbar unchanged.
+- Zustand `GameState` / editor / turn engine / v1 JSON import-export.
 
 ### F3 — Persistence Abstraction (Done)
 
@@ -83,16 +82,27 @@ Implemented:
 - Unsaved-leave protection: `beforeunload` + in-app confirm via `useBlocker` (data router).
 - Chrome shows map name, saved/unsaved badge, last saved time, Rename / Save / Save As.
 - Scratch `/library/maps/current/edit` kept as non-catalog fallback.
-- Legacy toolbar JSON import/export retained (import marks dirty; export uses active dimensions).
+- Legacy JSON import/export retained in the command bar (import marks dirty; export uses active dimensions).
 - Verification: `npm run verify:editor-persistence`.
 
-Not done (intentionally → F6+):
-- World Editor visual redesign (F6).
-- Rules presets UI, New Game, Active Game.
+### F6 — World Editor Restructure (Done)
 
-### F6–F12 — Not started
+Implemented:
+- Layout: top command bar + dominant map + right panel (~360px). No permanent left toolbar.
+- Command bar: Back/Open, map name/status, Save, Save As, Description, New Map (`?create=1`), Import/Export JSON, View Mode → Display. Resize / Mini-map disabled (planned).
+- Right panel: View/Edit switch; Tiles / Cities / Display / temporary Sim.
+- Tiles: Terrain, Features (vegetation), Mountains/Hills, Rivers, Resources, Clear Tile; planned subsections disabled (Improvements, Roads, Borders, Labels, F7 generation).
+- Cities: Create City tool, list/search, center, edit dialog, delete with confirm.
+- Display: supported layers + presets (Normal, Terrain Only, Resources Only, Cities Only, Relief); UI-only — does not dirty.
+- Temporary Sim section: CivilizationsPanel, PlayControlPanel, PlayersPanel, SettingsPanel (legacy until F8–F10).
+- Verification: `npm run verify:world-editor-ui`.
 
-Next: **F6 World Editor Restructure** (visual redesign). See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
+Deferred / planned:
+- Mini-map; Resize; F7 independent generation ops; Political display preset; improvements/roads/labels data models.
+
+### F7–F12 — Not started
+
+Next: **F7 Independent Map Layers**. See `FOUNDATION_IMPLEMENTATION_PLAN.md`.
 
 ---
 
@@ -103,15 +113,15 @@ Next: **F6 World Editor Restructure** (visual redesign). See `FOUNDATION_IMPLEME
 Scope: overall UI layout, panel arrangement, Edit/View mode toggle, the setup→playing phase transition.
 
 Implemented:
-- World Editor layout (on `/library/maps/current/edit`): Toolbar (left), MapCanvas (center), right-hand sidebar column (CivilizationsPanel → PlayControlPanel → PlayersPanel → SettingsPanel).
+- World Editor F6 layout: command bar, MapCanvas, right panel (Tiles/Cities/Display/Sim).
 - Edit/View mode toggle (`viewMode`), switching what a hex click does.
-- `gamePhase: 'setup' | 'playing'` and the transition via the "Играть" button in `PlayControlPanel`.
+- `gamePhase: 'setup' | 'playing'` and the transition via the "Играть" button in `PlayControlPanel` (under Sim).
 - City-founding modal (`CityModal`) and tile-info popup (`TileInfoPanel`) as overlays.
 - Top-level app routing / Main Menu (see F1 above).
 
 Not yet done / open questions:
 - No way to go back from `'playing'` to `'setup'` phase (no "stop game / edit map again" flow) — currently the owner can manually flip `viewMode` back to `'edit'` mid-game, but there's no explicit "return to setup" affordance.
-- Overall panel layout has not been revisited for scaling to a much wider/narrower browser window beyond the responsive canvas work already done.
+- Narrow widths collapse the right panel behind a Show tools control (desktop-first; not a full mobile editor).
 
 ### M2 — Генерация и редактор карт, городов (Active)
 
@@ -222,6 +232,13 @@ After every repository-changing agent iteration (mandatory; full procedure in `A
 
 Concise record of completed repository-changing iterations. Newest first. Retain only entries dated within the last **3 calendar months**. Significant items may appear here while recent; permanent record is §8.
 
+### 2026-07-12 — F6 World Editor Restructure
+
+- Classification: Significant
+- Summary: Redesigned World Editor to Civ V WorldBuilder-inspired layout (command bar + dominant map + right panel). Moved tools into Tiles/Cities/Display; temporary Sim for legacy play panels; display layers/presets without dirty; Clear Tile; Accordion/SegmentedControl; `npm run verify:world-editor-ui`. F5 persistence and v1 JSON preserved. Mini-map/Resize deferred.
+- Files: `src/pages/WorldEditorPage.tsx`, `src/components/editor/*`, `src/components/MapCanvas.tsx`, `src/components/ui/{Accordion,SegmentedControl}*`, `src/editor/*`, `src/game/store.ts`, `src/design-system/components.css`, `src/pages/MapsCatalogPage.tsx`, `package.json`, docs
+- Validation: `npm run build` PASS; `git diff --check` PASS; `verify:domain` / `verify:persistence` / `verify:catalogs` / `verify:editor-persistence` / `verify:world-editor-ui` PASS; manual browser smoke PASS for scratch `/library/maps/current/edit` shell (command bar, View/Edit, Tiles accordions, Save disabled); full selected-map Save/dirty/Play checklist not exhaustively run
+
 ### 2026-07-12 — F5 World Editor Migration
 
 - Classification: Significant
@@ -291,11 +308,18 @@ Concise record of completed repository-changing iterations. Newest first. Retain
 
 Permanent record of durable changes and decisions. Chronological entries must **never** be removed because of age. Clarify or correct if later evidence shows inaccuracy. Prefer linking to the source-of-truth doc over duplicating low-level detail.
 
+### 2026-07-12 — F6 World Editor Restructure
+
+- Area: Product / Architecture / UX
+- Change: World Editor now uses a Civilization V WorldBuilder-inspired shell: compact top command bar, dominant map canvas, and a structured right panel (View/Edit, Tiles, Cities, Display, temporary Simulation). Display-layer state is UI-only. F5 catalog persistence and v1 JSON remain. Mini-map and Resize are deferred; F7 generation actions are disabled placeholders only.
+- Reason: Separates map-editing IA from legacy left-toolbar chrome before independent layer generation and Active Game UI work.
+- Source of truth: `ARCHITECTURE.md` §3.5, `src/components/editor/`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F6
+
 ### 2026-07-12 — F5 World Editor Migration
 
 - Area: Product / Architecture
-- Change: Catalog maps open at `/library/maps/:mapId/edit` with load/save through `MapRepository`, dirty-state tracking, and unsaved-navigation protection. Scratch editor remains at `current/edit`. Legacy Zustand runtime and v1 JSON toolbar I/O are preserved.
-- Reason: Completes the F4 temporary bridge so reusable maps are editable as selected catalog items before F6 visual redesign.
+- Change: Catalog maps open at `/library/maps/:mapId/edit` with load/save through `MapRepository`, dirty-state tracking, and unsaved-navigation protection. Scratch editor remains at `current/edit`. Legacy Zustand runtime and v1 JSON I/O are preserved.
+- Reason: Completes the F4 temporary bridge so reusable maps are editable as selected catalog items.
 - Source of truth: `ARCHITECTURE.md` §3.4, `src/catalog/editorPersistence.ts`, `FOUNDATION_IMPLEMENTATION_PLAN.md` §F5
 
 ### 2026-07-12 — F4 Game Content Library

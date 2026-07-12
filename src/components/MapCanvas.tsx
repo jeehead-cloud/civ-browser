@@ -15,8 +15,10 @@ const TERRAIN_COLORS: Record<TerrainType, string> = {
   snow: '#f1f5f9',
 }
 
+const HIDDEN_TERRAIN_FILL = '#334155'
+
 interface Camera {
-  x: number // мировые координаты (пиксели), что сейчас в центре экрана
+  x: number
   y: number
   zoom: number
 }
@@ -40,10 +42,12 @@ export function MapCanvas() {
   const viewMode = useGameStore((s) => s.viewMode)
   const setViewingTile = useGameStore((s) => s.setViewingTile)
   const setAddingCityAt = useGameStore((s) => s.setAddingCityAt)
-  const removeCity = useGameStore((s) => s.removeCity)
   const toggleRiverEdge = useGameStore((s) => s.toggleRiverEdge)
   const assigningCapitalForCivId = useGameStore((s) => s.assigningCapitalForCivId)
   const assignCapital = useGameStore((s) => s.assignCapital)
+  const editorDisplay = useGameStore((s) => s.editorDisplay)
+  const cameraFocusRequest = useGameStore((s) => s.cameraFocusRequest)
+  const setSelectedEditorCityId = useGameStore((s) => s.setSelectedEditorCityId)
 
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 0.5 })
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({
@@ -104,6 +108,12 @@ export function MapCanvas() {
   }, [])
 
   useEffect(() => {
+    if (!cameraFocusRequest) return
+    const world = axialToPixel(cameraFocusRequest.coord)
+    setCamera((c) => ({ ...c, x: world.x, y: world.y }))
+  }, [cameraFocusRequest])
+
+  useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -114,13 +124,13 @@ export function MapCanvas() {
     ctx.fillRect(0, 0, canvasSize.width, canvasSize.height)
 
     const margin = HEX_SIZE * 2 * camera.zoom
+    const layers = editorDisplay
 
     for (const key in game.tiles) {
       const tile = game.tiles[key]
       const world = axialToPixel(tile.coord)
       const screen = worldToScreen(world.x, world.y)
 
-      // Отсечение: не рисуем то, что вне видимой области канваса
       if (
         screen.x < -margin ||
         screen.x > canvasSize.width + margin ||
@@ -138,16 +148,16 @@ export function MapCanvas() {
         else ctx.lineTo(c.x, c.y)
       })
       ctx.closePath()
-      ctx.fillStyle = TERRAIN_COLORS[tile.terrain]
+      ctx.fillStyle = layers.terrain ? TERRAIN_COLORS[tile.terrain] : HIDDEN_TERRAIN_FILL
       ctx.fill()
 
-      if (camera.zoom > 0.3) {
+      if (layers.grid && camera.zoom > 0.3) {
         ctx.strokeStyle = 'rgba(0,0,0,0.25)'
         ctx.lineWidth = 1
         ctx.stroke()
       }
 
-      if (tile.terrain === 'mountains' && camera.zoom > 0.08) {
+      if (layers.mountainsHills && tile.terrain === 'mountains' && camera.zoom > 0.08) {
         ctx.font = `${16 * camera.zoom}px sans-serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
@@ -155,7 +165,7 @@ export function MapCanvas() {
         ctx.textBaseline = 'alphabetic'
       }
 
-      if (tile.hasHills && camera.zoom > 0.08) {
+      if (layers.mountainsHills && tile.hasHills && camera.zoom > 0.08) {
         ctx.fillStyle = 'rgba(90, 60, 20, 0.45)'
         const bumpSize = 4 * camera.zoom
         const bx = screen.x - HEX_SIZE * camera.zoom * 0.5
@@ -168,7 +178,7 @@ export function MapCanvas() {
         ctx.fill()
       }
 
-      if (tile.riverDirections.length > 0 && camera.zoom > 0.08) {
+      if (layers.rivers && tile.riverDirections.length > 0 && camera.zoom > 0.08) {
         ctx.strokeStyle = '#1d4ed8'
         ctx.lineWidth = Math.max(1.5, 3 * camera.zoom)
         for (const dir of tile.riverDirections) {
@@ -184,7 +194,7 @@ export function MapCanvas() {
         }
       }
 
-      if (tile.vegetation !== 'none' && camera.zoom > 0.08) {
+      if (layers.features && tile.vegetation !== 'none' && camera.zoom > 0.08) {
         const cx = screen.x
         const cy = screen.y
         const s = 5 * camera.zoom
@@ -206,14 +216,14 @@ export function MapCanvas() {
         }
       }
 
-      if (tile.resource !== 'none' && !tile.cityId && camera.zoom > 0.08) {
+      if (layers.resources && tile.resource !== 'none' && !tile.cityId && camera.zoom > 0.08) {
         ctx.fillStyle = '#000'
         ctx.font = `${10 * camera.zoom}px sans-serif`
         ctx.textAlign = 'center'
         ctx.fillText(tile.resource, screen.x, screen.y - 8 * camera.zoom)
       }
 
-      if (tile.cityId) {
+      if (layers.cities && tile.cityId) {
         const city = cities.find((c) => c.id === tile.cityId)
         const radius = Math.max(4, 9 * camera.zoom)
         ctx.beginPath()
@@ -232,7 +242,7 @@ export function MapCanvas() {
           ctx.font = `bold ${10 * camera.zoom}px sans-serif`
           ctx.fillText(city.name, screen.x, screen.y - radius - 4 * camera.zoom)
         }
-        if (city && city.civId) {
+        if (layers.ownershipFlags && city && city.civId) {
           const civ = civilizations.find((c) => c.id === city.civId)
           if (civ && camera.zoom > 0.08) {
             ctx.font = `${12 * camera.zoom}px sans-serif`
@@ -242,7 +252,7 @@ export function MapCanvas() {
         }
       }
     }
-  }, [game.tiles, game.cities, game.civilizations, camera, canvasSize])
+  }, [game.tiles, game.cities, game.civilizations, camera, canvasSize, editorDisplay])
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     draggingRef.current = {
@@ -266,7 +276,7 @@ export function MapCanvas() {
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     const drag = draggingRef.current
     draggingRef.current = null
-    if (!drag || drag.moved) return // это был пан, а не клик
+    if (!drag || drag.moved) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -293,7 +303,8 @@ export function MapCanvas() {
 
     if (builder.mode === 'city') {
       if (tile.cityId) {
-        removeCity(key)
+        setSelectedEditorCityId(tile.cityId)
+        setViewingTile(key)
       } else {
         setAddingCityAt(key)
       }
@@ -320,8 +331,8 @@ export function MapCanvas() {
   }
 
   return (
-    <div>
-      <div ref={containerRef} style={{ width: '100%', overflow: 'hidden' }}>
+    <div className="world-editor-canvas-wrap">
+      <div ref={containerRef} className="world-editor-canvas-host">
         <canvas
           ref={canvasRef}
           width={canvasSize.width}
@@ -330,21 +341,13 @@ export function MapCanvas() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onWheel={handleWheel}
+          className="world-editor-canvas"
           style={{
-            border: '1px solid #333',
-            boxSizing: 'border-box',
-            cursor: 'grab',
-            display: 'block',
-            touchAction: 'none',
             width: `${canvasSize.width}px`,
             height: `${canvasSize.height}px`,
-            maxWidth: '100%',
           }}
         />
       </div>
-      <p style={{ fontSize: 12, color: '#666' }}>
-        Тащи мышью — пан по карте. Колесо — зум. Клик (без перетаскивания) — покрасить гекс.
-      </p>
     </div>
   )
 }

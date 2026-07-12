@@ -10,7 +10,8 @@
     "verify:domain": "tsx src/domain/verify.ts",
     "verify:persistence": "tsx src/persistence/verify.ts",
     "verify:catalogs": "tsx src/catalog/verify.ts",
-    "verify:editor-persistence": "tsx src/catalog/verifyEditorPersistence.ts"
+    "verify:editor-persistence": "tsx src/catalog/verifyEditorPersistence.ts",
+    "verify:world-editor-ui": "tsx src/editor/verifyWorldEditorUi.ts"
   },
   "dependencies": {
     "dexie": "^4.4.4",

@@ -1,6 +1,6 @@
 # Civ Browser — Foundation Implementation Plan
 
-**Status:** Active (F1–F5 done; F6+ queued)
+**Status:** Active (F1–F6 done; F7+ queued)
 **Purpose:** Turn the target product structure into an incremental implementation plan
 **Repository:** `https://github.com/jeehead-cloud/civ-browser`
 **Local repository path:** `C:\Projects\civ-browser`
@@ -174,7 +174,7 @@ Names may change during implementation, but responsibilities must remain separat
 | F3 | Persistence Abstraction | Local catalogs and game saves | **Done** |
 | F4 | Content Library | Maps and civilizations become reusable catalog items | **Done** |
 | F5 | World Editor Migration | Existing editor moved into dedicated selected-map route | **Done** |
-| F6 | World Editor Restructure | New Civ V-like editor structure | Queued |
+| F6 | World Editor Restructure | New Civ V-like editor structure | **Done** |
 | F7 | Independent Map Layers | Terrain, mountains, rivers, resources edited separately | Queued |
 | F8 | Rules Presets | Scalable settings and balance system | Queued |
 | F9 | New Game Wizard | Create game sessions from templates | Queued |
@@ -589,6 +589,8 @@ Existing functionality must remain available:
 
 # 10. F6 — World Editor Restructure
 
+**Status: Implemented** (top command bar + map + right panel; F5 persistence preserved; F7 generation deferred).
+
 ## Goal
 
 Restructure the editor UI around the agreed Civ V WorldBuilder model.
@@ -641,6 +643,17 @@ Restructure the editor UI around the agreed Civ V WorldBuilder model.
 - Edit mode applies tools;
 - switching sections does not reset the map;
 - `npm run build` passes.
+
+## Implementation notes / deviations
+
+- Layout: `EditorCommandBar` + dominant `MapCanvas` + `EditorRightPanel` (~360px). Permanent left `Toolbar` removed.
+- Working command-bar actions: Back/Open → catalog; Save / Save As (F5); Description; Import/Export JSON; View Mode → Display section; New Map → `/library/maps?create=1`.
+- Deferred (disabled/planned): Resize; Mini-map (avoid second renderer).
+- Temporary **Sim** section holds legacy Civilizations / Play / Players / Settings panels (final separation F8–F10).
+- Clear Tile implemented (preserves terrain + city; clears features/hills/rivers/resource/owner).
+- Display layers/presets are UI-only (`editorDisplay`); do not mark dirty.
+- Verification: `npm run verify:world-editor-ui`.
+- F7 random/clear-all generation actions remain disabled placeholders only.
 
 ---
 

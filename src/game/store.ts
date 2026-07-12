@@ -1,7 +1,14 @@
 import { create } from 'zustand'
-import { GameState, Tile, TerrainType, ResourceType, VegetationType, City, Civilization, GameSettings } from './types'
+import { GameState, Tile, TerrainType, ResourceType, VegetationType, City, Civilization, GameSettings, AxialCoord } from './types'
 import { hexDistance, neighbors, tileKey } from './hexGrid'
 import { generateProceduralMap, generateEarthLikeMap } from './mapGenerator'
+import {
+  applyDisplayPreset,
+  DEFAULT_DISPLAY_LAYERS,
+  EditorDisplayLayers,
+  EditorDisplayPreset,
+  toggleDisplayLayer,
+} from '../editor/displayLayers'
 
 // Размер карты — меняется здесь. 220x160 (~35 000 гексов) — компромисс между
 // "ощущением огромного мира" и тем, чтобы ИИ/перемещение юнитов не превратились
@@ -15,13 +22,41 @@ function createInitialTiles(): Record<string, Tile> {
   return generateProceduralMap({ width: MAP_WIDTH, height: MAP_HEIGHT })
 }
 
+/** Clear vegetation/hills/rivers/resource/owner; keep terrain and city. */
+function clearTileFields(tiles: Record<string, Tile>, key: string) {
+  const tile = tiles[key]
+  if (!tile) return
+  for (const dir of tile.riverDirections) {
+    const neighborCoord = neighbors(tile.coord)[dir]
+    const neighborKey = tileKey(neighborCoord)
+    const neighbor = tiles[neighborKey]
+    if (neighbor) {
+      const mirrorDir = (dir + 3) % 6
+      tiles[neighborKey] = {
+        ...neighbor,
+        riverDirections: neighbor.riverDirections.filter((d) => d !== mirrorDir),
+      }
+    }
+  }
+  tiles[key] = {
+    ...tile,
+    vegetation: 'none',
+    hasHills: false,
+    riverDirections: [],
+    resource: 'none',
+    ownerCivId: null,
+  }
+}
+
 interface BuilderState {
   selectedTerrain: TerrainType
   selectedResource: ResourceType
-  mode: 'terrain' | 'resource' | 'city' | 'hills' | 'vegetation' | 'river'
+  mode: 'terrain' | 'resource' | 'city' | 'hills' | 'vegetation' | 'river' | 'clear'
   selectedVegetation: VegetationType
   brushRadius: number // 0 = один гекс, 1 = гекс + соседи, и т.д.
 }
+
+export type { EditorDisplayLayers, EditorDisplayPreset }
 
 interface Store {
   game: GameState
@@ -37,12 +72,26 @@ interface Store {
   setAddingCityAt: (key: string | null) => void
   addCity: (tileKey: string, name: string, population: number) => void
   removeCity: (tileKey: string) => void
+  updateCity: (
+    cityId: string,
+    updates: Partial<Pick<City, 'name' | 'population' | 'growthRateBonus'>>,
+  ) => void
+  clearTileExtras: (centerKey: string) => void
   setSelectedTerrain: (t: TerrainType) => void
   setSelectedResource: (r: ResourceType) => void
   setSelectedVegetation: (v: VegetationType) => void
   setMode: (m: BuilderState['mode']) => void
   setBrushRadius: (r: number) => void
   toggleRiverEdge: (tileKey: string, edgeIndex: number) => void
+  editorDisplay: EditorDisplayLayers
+  setEditorDisplayLayer: (key: keyof EditorDisplayLayers, value: boolean) => void
+  toggleEditorDisplayLayer: (key: keyof EditorDisplayLayers) => void
+  applyEditorDisplayPreset: (preset: EditorDisplayPreset) => void
+  cameraFocusRequest: { coord: AxialCoord; nonce: number } | null
+  requestCameraFocus: (coord: AxialCoord) => void
+  clearCameraFocusRequest: () => void
+  selectedEditorCityId: string | null
+  setSelectedEditorCityId: (cityId: string | null) => void
   addCivilization: (name: string, color: string, cultureName: string, flagEmoji: string) => void
   removeCivilization: (civId: string) => void
   updateCivilization: (civId: string, updates: Partial<Civilization>) => void
@@ -151,6 +200,21 @@ export const useGameStore = create<Store>((set, get) => ({
   editorDirty: false,
   lastSavedAt: null,
   catalogBridge: null,
+  editorDisplay: { ...DEFAULT_DISPLAY_LAYERS },
+  cameraFocusRequest: null,
+  selectedEditorCityId: null,
+  setEditorDisplayLayer: (key, value) =>
+    set((s) => ({ editorDisplay: { ...s.editorDisplay, [key]: value } })),
+  toggleEditorDisplayLayer: (key) =>
+    set((s) => ({ editorDisplay: toggleDisplayLayer(s.editorDisplay, key) })),
+  applyEditorDisplayPreset: (preset) =>
+    set({ editorDisplay: applyDisplayPreset(preset) }),
+  requestCameraFocus: (coord) =>
+    set((s) => ({
+      cameraFocusRequest: { coord, nonce: (s.cameraFocusRequest?.nonce ?? 0) + 1 },
+    })),
+  clearCameraFocusRequest: () => set({ cameraFocusRequest: null }),
+  setSelectedEditorCityId: (cityId) => set({ selectedEditorCityId: cityId }),
   markEditorDirty: () => set({ editorDirty: true }),
   clearEditorDirty: () => set({ editorDirty: false }),
   setCatalogMapMeta: (updates) => {
@@ -193,6 +257,14 @@ export const useGameStore = create<Store>((set, get) => ({
       for (const tile of affected) {
         const key = tileKey(tile.coord)
         updatedTiles[key] = { ...tile, hasHills: newValue }
+      }
+      set({ game: { ...game, tiles: updatedTiles }, editorDirty: true })
+      return
+    }
+
+    if (builder.mode === 'clear') {
+      for (const tile of affected) {
+        clearTileFields(updatedTiles, tileKey(tile.coord))
       }
       set({ game: { ...game, tiles: updatedTiles }, editorDirty: true })
       return
@@ -283,7 +355,35 @@ export const useGameStore = create<Store>((set, get) => ({
         tiles: { ...game.tiles, [tileKey]: { ...tile, cityId: null } },
       },
       editorDirty: true,
+      selectedEditorCityId: get().selectedEditorCityId === cityId ? null : get().selectedEditorCityId,
     })
+  },
+  updateCity: (cityId, updates) => {
+    const { game } = get()
+    if (!game.cities.some((c) => c.id === cityId)) return
+    set({
+      game: {
+        ...game,
+        cities: game.cities.map((c) => (c.id === cityId ? { ...c, ...updates } : c)),
+      },
+      editorDirty: true,
+    })
+  },
+  clearTileExtras: (centerKey) => {
+    const { game, builder } = get()
+    const centerTile = game.tiles[centerKey]
+    if (!centerTile) return
+    const affected =
+      builder.brushRadius === 0
+        ? [centerTile]
+        : Object.values(game.tiles).filter(
+            (t) => hexDistance(t.coord, centerTile.coord) <= builder.brushRadius,
+          )
+    const updatedTiles = { ...game.tiles }
+    for (const tile of affected) {
+      clearTileFields(updatedTiles, tileKey(tile.coord))
+    }
+    set({ game: { ...game, tiles: updatedTiles }, editorDirty: true })
   },
   toggleRiverEdge: (centerKey, edgeIndex) => {
     const { game } = get()
@@ -381,6 +481,7 @@ export const useGameStore = create<Store>((set, get) => ({
         ...game,
         cities: game.cities.map((c) => (c.id === cityId ? { ...c, growthRateBonus: bonus } : c)),
       },
+      editorDirty: true,
     })
   },
   startGame: (startYear, yearsPerTurn) => {

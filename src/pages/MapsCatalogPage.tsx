@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AppShell } from '../components/AppShell'
 import {
   Badge,
@@ -38,9 +38,10 @@ function readinessLabel(value: ReturnType<typeof mapReadiness>): string {
 
 export function MapsCatalogPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const fileRef = useRef<HTMLInputElement>(null)
   const catalog = useMapsCatalog()
-  const [createOpen, setCreateOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(() => searchParams.get('create') === '1')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [width, setWidth] = useState(CATALOG_MAP_DEFAULT_WIDTH)
@@ -49,11 +50,26 @@ export function MapsCatalogPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setCreateOpen(true)
+    }
+  }, [searchParams])
+
+  function closeCreateDialog() {
+    setCreateOpen(false)
+    if (searchParams.get('create') === '1') {
+      const next = new URLSearchParams(searchParams)
+      next.delete('create')
+      setSearchParams(next, { replace: true })
+    }
+  }
+
   async function handleCreate() {
     setFormError(null)
     try {
       await catalog.createMap({ name, description, width, height })
-      setCreateOpen(false)
+      closeCreateDialog()
       setName('')
       setDescription('')
       setWidth(CATALOG_MAP_DEFAULT_WIDTH)
@@ -218,10 +234,10 @@ export function MapsCatalogPage() {
       <Dialog
         open={createOpen}
         title="Create Map"
-        onClose={() => setCreateOpen(false)}
+        onClose={closeCreateDialog}
         footer={
           <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
-            <Button variant="secondary" size="md" onClick={() => setCreateOpen(false)} disabled={catalog.busy}>
+            <Button variant="secondary" size="md" onClick={closeCreateDialog} disabled={catalog.busy}>
               Cancel
             </Button>
             <Button variant="primary" size="md" onClick={() => void handleCreate()} disabled={catalog.busy}>

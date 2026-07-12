@@ -29,7 +29,7 @@
 | File exchange | Manual JSON export/import (v1 map files) | Independent of IndexedDB; unchanged in F3 |
 | Package manager | npm | |
 
-There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
+There is intentionally no backend. Live editor/gameplay state still lives in the Zustand store and can be exchanged via v1 JSON download/upload. F3 IndexedDB repositories store domain entities. **F4** wires Maps and Civilizations catalogs. **F5** opens `/library/maps/:mapId/edit`, loads/saves the selected `MapTemplate`, and tracks unsaved changes. **F6** restructures the editor into a command bar + map + right panel. Scratch editor remains at `/library/maps/current/edit` (not catalog-backed).
 
 ---
 
@@ -50,7 +50,7 @@ There is intentionally no backend. Live editor/gameplay state still lives in the
 | `/games/:gameId` | Active Game | Placeholder (shows `gameId` as route context only) |
 | `*` | Not found | Working |
 
-Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it keeps the full viewport for the map and a slim chrome strip (Main Menu + Maps Catalog + Save controls on catalog maps).
+Non-editor pages use `src/components/AppShell.tsx` (title + nav). The World Editor route does **not** use `AppShell`; it uses a full-viewport F6 shell: top command bar, dominant map, right editing panel.
 
 Routing uses `createBrowserRouter` / `RouterProvider` so `useBlocker` can guard unsaved editor navigation.
 
@@ -69,7 +69,7 @@ Catalog **Open** navigates to `/library/maps/:mapId/edit`. Scratch `/library/map
 | React UI primitives | `src/components/ui/` |
 | Copied production assets | `src/assets/design-system/` (reserved; no logo/icon pack shipped yet) |
 
-**Scoping:** shell pages use `.app-shell` classes and dark Atlas chrome. The World Editor isolates light MVP panel chrome under a local light background so global dark body tokens do not rewrite toolbar/panel inline layouts. Do not import `Design System/` files into the Vite bundle — translate into maintainable React/CSS instead. Full editor visual redesign is **F6**.
+**Scoping:** shell pages use `.app-shell` classes and dark Atlas chrome. The World Editor uses Atlas command-bar / right-panel chrome (`world-editor-*` classes) with the map as the dominant visual area. Do not import `Design System/` files into the Vite bundle — translate into maintainable React/CSS instead.
 
 ---
 
@@ -123,12 +123,14 @@ civ-browser/
     │   ├── hooks/
     │   ├── verification.ts / verify.ts
     │   └── editorPersistenceVerification.ts / verifyEditorPersistence.ts
+    ├── editor/                    — F6 display-layer helpers + verify:world-editor-ui
     ├── game/                      — legacy runtime types + Zustand store
     └── components/
         ├── AppShell.tsx
-        ├── ui/                    — Button, Card, Panel, Badge, Input, Tabs, headers, EmptyState, Dialog, ConfirmDialog, FormField
+        ├── ui/                    — Button, Accordion, SegmentedControl, Dialog, …
+        ├── editor/                — EditorCommandBar, EditorRightPanel, Tiles/Cities/Display sections
         ├── MapCanvas.tsx
-        └── …
+        └── … (CityModal, TileInfoPanel, temporary Simulation panels)
 ```
 
 This map reflects the code as of the last update — always check the actual repository, since new files may have been added since.
@@ -212,10 +214,21 @@ Legacy editor Load/Export Map buttons are unchanged and independent of the catal
 | Dirty | Store flag set by map-content mutators (`paintAt`, rivers, cities, regenerate, earth, import, rename); not by pan/zoom/view mode |
 | Leave guard | `beforeunload` + React Router `useBlocker` confirm when dirty |
 | Not-found / error | Atlas EmptyState + retry / back to catalog; editor not initialized |
-| Legacy JSON | Toolbar import marks dirty; export uses active map dimensions; schema unchanged |
+| Legacy JSON | Command-bar Import/Export; import marks dirty; export uses active map dimensions; schema unchanged |
 | Verification | `npm run verify:editor-persistence` |
 
-Editor visual redesign remains **F6**.
+## 3.5. World Editor layout (F6)
+
+| Item | Behavior |
+|---|---|
+| Shell | Top `EditorCommandBar` + dominant map column + right `EditorRightPanel` (~320–380px). No permanent left toolbar. |
+| Modes | View/Edit segmented control; View opens tile info; Edit applies active tool |
+| Right sections | Tiles / Cities / Display / Sim (temporary legacy simulation panels) |
+| Display | `editorDisplay` UI state + presets; rendering only; does not mark dirty or mutate `MapTemplate` |
+| Clear Tile | Builder mode `clear` — keeps terrain + city; clears vegetation/hills/rivers/resource/owner |
+| Cities | Create via existing modal; list/search/center/edit; delete with confirm (not via Clear Tile) |
+| Deferred | Resize, mini-map, F7 generation ops, improvements/roads/labels models |
+| Verification | `npm run verify:world-editor-ui` |
 
 ---
 

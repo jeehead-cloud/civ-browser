@@ -101,7 +101,7 @@ Atlas tokens did not publish a z-index scale. Production uses:
 
 Implemented under `src/components/ui/`:
 
-Button (primary/secondary/ghost/danger × sm/md/lg), IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog (Esc to close), ConfirmDialog, FormField.
+Button (primary/secondary/ghost/danger × sm/md/lg), IconButton, Card/CardLink, Panel, Badge, Input, Tabs, PageHeader, SectionHeader, EmptyState, Dialog (Esc to close), ConfirmDialog, FormField, Accordion, SegmentedControl.
 
 States: hover, active/pressed (primary), disabled, focus-visible. Toast/Tooltip deferred until a screen needs them.
 
@@ -117,7 +117,7 @@ No logo asset was provided; wordmark is typeset.
 
 ## 10. Layout / navigation
 
-Non-editor screens use `AppShell`: sticky top bar (brand + nav), centered content column. Editor route uses a slim `world-editor-chrome` strip only — full MVP layout preserved underneath with light panel chrome isolation.
+Non-editor screens use `AppShell`: sticky top bar (brand + nav), centered content column. World Editor (F6) uses a full-viewport shell: compact top command bar, dominant map canvas, ~360px right panel with View/Edit + Tiles/Cities/Display/Sim sections.
 
 ---
 
@@ -127,6 +127,7 @@ Non-editor screens use `AppShell`: sticky top bar (brand + nav), centered conten
 - Semantic buttons/links; IconButton requires `aria-label`.
 - Contrast: light text on dark graphite; gold buttons use dark on-accent text.
 - Reduced-motion media query zeroes duration tokens.
+- Dialogs close on Escape; segmented controls expose `role="tablist"`.
 
 ---
 

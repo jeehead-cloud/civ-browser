@@ -103,7 +103,8 @@ See `FOUNDATION_IMPLEMENTATION_PLAN.md` and `PRODUCT_STRUCTURE.md`.
 | F3 | Persistence Abstraction | Done |
 | F4 | Content Library (Maps / Civilizations catalogs) | Done |
 | F5 | World Editor Migration (selected-map load/save) | Done |
-| F6–F12 | Editor redesign, presets, new game, active game, … | Queued |
+| F6 | World Editor Restructure (command bar + right panel) | Done |
+| F7–F12 | Independent layers, presets, new game, active game, … | Queued |
 
 ### 6.2. Gameplay milestones (MVP / later)
 
